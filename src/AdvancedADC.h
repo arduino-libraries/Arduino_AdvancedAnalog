@@ -13,8 +13,9 @@ enum {
 };
 
 struct adc_descr_t;
-typedef DMABuffer<uint16_t> ADCBuffer;
-typedef mbed::Callback<void()> adc_callback_t;
+typedef DMABuffer<uint16_t>     ADCBuffer;
+typedef DMABufferPool<uint16_t> ADCBufferPool;
+typedef mbed::Callback<void()>  adc_callback_t;
 
 class AdvancedADC {
     private:
@@ -29,7 +30,6 @@ class AdvancedADC {
         }
         bool available();
         ADCBuffer dequeue();
-        void release(ADCBuffer buf);
         int begin(uint32_t bits, uint32_t fs, size_t n_samples, size_t n_buffers, adc_callback_t cb=nullptr);
         int stop();
 };
