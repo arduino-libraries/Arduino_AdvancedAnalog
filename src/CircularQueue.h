@@ -1,25 +1,22 @@
 #include "Arduino.h"
 
-template <class T> class FixedQueue {
+template <class T> class CircularQueue {
     private:
         size_t size;
-        T *buffer;
         volatile size_t _head;
         volatile size_t _tail;
+        std::unique_ptr<T[]> buffer;
     
     private:
-        size_t next_pos(size_t x) {
+        inline size_t next_pos(size_t x) {
             return (((x) + 1) % (size));
         }
 
     public:
-        FixedQueue(size_t size): size(size), _head(0), _tail(0) {
-            buffer = (T *) malloc(size * sizeof(T));
-        }
-
-        ~FixedQueue() {
-            if (buffer) {
-                free(buffer);
+        CircularQueue(size_t size=0):
+            size(size), _head(0), _tail(0), buffer(nullptr) {
+            if (size) {
+                buffer.reset(new T[size]);
             }
         }
 
