@@ -13,8 +13,8 @@ enum {
 };
 
 struct adc_descr_t;
-typedef DMABuffer<uint16_t>     ADCBuffer;
-typedef DMABufferPool<uint16_t> ADCBufferPool;
+typedef uint16_t ADCSample;
+typedef DMABuffer<ADCSample> &ADCBuffer;
 typedef mbed::Callback<void()>  adc_callback_t;
 
 class AdvancedADC {

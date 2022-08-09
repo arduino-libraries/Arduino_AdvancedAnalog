@@ -1,5 +1,42 @@
 #include "Arduino.h"
 
+template <class T> class LLQueue {
+    private:
+        T head;
+        T tail;
+
+    public:
+        LLQueue(): head(nullptr), tail(nullptr) {
+
+        }
+
+        bool empty() {
+            return head == nullptr;
+        }
+
+        void push(T value) {
+            value->next = nullptr;
+            if (head == nullptr) {
+                head = value;
+            }
+            if (tail) {
+                tail->next = value;
+            }
+            tail = value;
+        }
+
+        T pop() {
+            T value = head;
+            if (head) {
+                head = head->next;
+            }
+            if (head == nullptr) {
+                tail = nullptr;
+            }
+            return value;
+        }
+};
+
 template <class T> class CircularQueue {
     private:
         size_t size;
@@ -28,7 +65,7 @@ template <class T> class CircularQueue {
             return _head == _tail;
         }
 
-        void push(T &value) {
+        void push(T value) {
             if (buffer && next_pos(_tail) != _head) {
                 buffer[_tail] = value;
                 _tail = next_pos(_tail);
@@ -36,11 +73,11 @@ template <class T> class CircularQueue {
         }
 
         T pop() {
-            T value;
             if (buffer && _head != _tail) {
-                value = buffer[_head];
+                T value = buffer[_head];
                 _head = next_pos(_head);
+                return value;
             }
-            return value;
+            return T();
         }
 };

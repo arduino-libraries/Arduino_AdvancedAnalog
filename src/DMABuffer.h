@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#include "CircularQueue.h"
+#include "Queue.h"
 
 #ifndef __SCB_DCACHE_LINE_SIZE
 #define __SCB_DCACHE_LINE_SIZE  32
@@ -29,54 +29,25 @@ template <size_t A> class AlignedAlloc {
         }
 };
 
-template <class, size_t> class DMABufferPool;
+template <class, size_t> class DMABufPool;
 
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
-    typedef DMABufferPool<T, A> Pool;
+    typedef DMABufPool<T, A> Pool;
 
     private:
         Pool *pool;
         size_t sz;
-        T *ptr[2];
-        size_t index;
+        T *ptr;
 
     public:
-        DMABuffer(): DMABuffer(nullptr, 0, nullptr, false) {
+        DMABuffer *next;
 
-        }
-
-        DMABuffer(size_t size, bool dblbuf): DMABuffer(nullptr, size, nullptr, dblbuf) {
-
-        }
-
-        DMABuffer(Pool *pool, size_t size, T *mem): DMABuffer(pool, size, mem, false) {
-
-        }
-
-        DMABuffer(Pool *pool, size_t size, T *mem, bool dblbuf):
-            pool(pool), sz(size), ptr{mem, nullptr}, index(0) {
-            if (mem != nullptr && dblbuf == true) {
-                // Double buffer with pool-managed memory.
-                ptr[1] = mem + (size / 2);
-            } else if (mem == nullptr && size != 0) {
-                // Unmanaged buffer with self-allocated memory.
-                size_t bufsize = AlignedAlloc<A>::round(size * sizeof(T));
-                ptr[0] = (T *) AlignedAlloc<A>::malloc(bufsize);
-                if (dblbuf) {
-                    ptr[1] = (T *) AlignedAlloc<A>::malloc(bufsize);
-                }
-            }
-        }
-
-        ~DMABuffer() {
-            if (pool == nullptr) {
-                AlignedAlloc<A>::free(ptr[0]);
-                AlignedAlloc<A>::free(ptr[1]);
-            }
+        DMABuffer(Pool *pool=nullptr, size_t size=0, T *mem=nullptr):
+            pool(pool), sz(size), ptr(mem), next(nullptr) {
         }
 
         T *data() {
-            return ptr[index];
+            return ptr;
         }
 
         size_t size() {
@@ -93,16 +64,9 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
             }
         }
 
-        T *swap() {
-            if (ptr[1]) {
-                index ^= 1;
-            }
-            return data();
-        }
-
         void release() {
-            if (pool) {
-                pool->release(*this);
+            if (pool && ptr) {
+                pool->release(this);
             }
         }
 
@@ -114,29 +78,29 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         }
 };
 
-template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
+template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
     private:
-        CircularQueue<DMABuffer<T>> freeq;
-        CircularQueue<DMABuffer<T>> readyq;
+        LLQueue<DMABuffer<T>*> freeq;
+        LLQueue<DMABuffer<T>*> readyq;
+        std::unique_ptr<DMABuffer<T>[]> buffers;
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
     public:
-        DMABufferPool(): pool(nullptr, AlignedAlloc<A>::free) {
-
-        }
-
-        DMABufferPool(size_t n_samples, size_t n_buffers):
-            freeq(n_buffers), readyq(n_buffers), pool(nullptr, AlignedAlloc<A>::free) {
+        DMABufPool(size_t n_samples, size_t n_buffers):
+            buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
 
             size_t bufsize = AlignedAlloc<A>::round(n_samples * sizeof(T));
 
-            // This pointer will be free'd with aligned_free in the destructor.
+            // Allocate non-aligned memory for the DMA buffers objects.
+            buffers.reset(new DMABuffer<T>[n_buffers]);
+
+            // Allocate aligned memory pool for DMA buffers pointers.
             pool.reset((uint8_t *) AlignedAlloc<A>::malloc(n_buffers * bufsize));
 
-            // Init DMA buffers using aligned pointer to dma buffers memory.
+            // Init DMA buffers using aligned pointers to dma buffers memory.
             for (size_t i=0; i<n_buffers; i++) {
-                DMABuffer<T> buf(this, n_samples, (T *) &pool.get()[i * bufsize]);
-                freeq.push(buf);
+                buffers[i] = DMABuffer<T>(this, n_samples, (T *) &pool.get()[i * bufsize]);
+                freeq.push(&buffers[i]);
             }
         }
 
@@ -148,29 +112,23 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
             return !readyq.empty();
         }
 
-        DMABuffer<T> allocate() {
+        DMABuffer<T> *allocate() {
             // Get a DMA buffer from the free queue.
-            if (!freeq.empty()) {
-                return freeq.pop();
-            }
-            return DMABuffer<T>();
+            return freeq.pop();
         }
 
-        void release(DMABuffer<T> &buf) {
+        void release(DMABuffer<T> *buf) {
             // Return DMA buffer to the free queue.
             freeq.push(buf);
         }
 
-        void enqueue(DMABuffer<T> &buf) {
+        void enqueue(DMABuffer<T> *buf) {
             // Add DMA buffer to the ready queue.
             readyq.push(buf);
         }
 
-        DMABuffer<T> dequeue() {
+        DMABuffer<T> *dequeue() {
             // Return a DMA buffer from the ready queue.
-            if (!readyq.empty()) {
-                return readyq.pop();
-            }
-            return DMABuffer<T>();
+            return readyq.pop();
         }
 };
