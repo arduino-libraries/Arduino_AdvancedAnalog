@@ -2,9 +2,8 @@
 #include "AdvancedADC.h"
 
 struct adc_descr_t {
-    size_t bufidx;
+    DBuffer<ADCSample> *dmabuf;
     DMABufPool<ADCSample> *pool;
-    DMABuffer<ADCSample> *dmabuf[2];
     IRQn_Type dma_irqn;
     ADC_HandleTypeDef adc;
     DMA_HandleTypeDef dma;
@@ -158,14 +157,14 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         HAL_ADC_ConfigChannel(&adc_descr->adc, &sConfig);
     }
 
-    //HAL_ADC_RegisterCallback(&hadc1, HAL_ADC_CONVERSION_HALF_CB_ID, );
-    //HAL_ADC_RegisterCallback(&hadc1, HAL_ADC_CONVERSION_COMPLETE_CB_ID, );
-
-    adc_descr->bufidx = 0;
-    adc_descr->pool = new DMABufPool<ADCSample>(n_samples * n_channels, n_buffers + 2);
-    adc_descr->dmabuf[0] = adc_descr->pool->allocate();
-    adc_descr->dmabuf[1] = adc_descr->pool->allocate();
-    HAL_ADC_Start_DMA(&adc_descr->adc, (uint32_t *) adc_descr->dmabuf[0]->data(), n_samples * n_channels * 2);
+    // Using 2 DMA Pool buffers for ADC-DMA transfers, will not work due to a limitation in
+    // ADC, which requires DMA to be configured in circular mode. And while two consecutive
+    // DMABuffer's have contiguous memory, the buffers memory may be padded and the second
+    // buffer's pointer will be set to half of the padded buffer size. Therefore, a separate
+    // double buffer is used here to handle the ADC-DMA transfers.
+    adc_descr->dmabuf = new DBuffer<ADCSample>(n_samples * n_channels);
+    adc_descr->pool = new DMABufPool<ADCSample>(n_samples * n_channels, n_buffers);
+    HAL_ADC_Start_DMA(&adc_descr->adc, (uint32_t *) adc_descr->dmabuf->data(), adc_descr->dmabuf->size() * 2);
     return 1;
 }
 
@@ -188,18 +187,19 @@ void DMA1_Stream3_IRQHandler() {
 }
 
 
+//TODO: Use HAL_ADC_RegisterCallback
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *adc) {
     adc_descr_t *adc_descr = adc_descr_get(adc->Instance);
     if (adc_descr->pool->writable()) {
-        DMABuffer<ADCSample> *dmabuf = adc_descr->dmabuf[adc_descr->bufidx];
         DMABuffer<ADCSample> *freebuf = adc_descr->pool->allocate();
-        dmabuf->flush();
-        memcpy(freebuf->data(), dmabuf->data(), dmabuf->bytes());
+        adc_descr->dmabuf->flush();
+        memcpy(freebuf->data(), adc_descr->dmabuf->data(), adc_descr->dmabuf->size());
         adc_descr->pool->enqueue(freebuf); // Move to ready queue.
     }
-    adc_descr->bufidx ^= 1;
+    adc_descr->dmabuf->swap();
 }
 
+//TODO: Use HAL_ADC_RegisterCallback
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     HAL_ADC_ConvHalfCpltCallback(adc);
 }

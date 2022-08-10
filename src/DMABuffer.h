@@ -29,6 +29,44 @@ template <size_t A> class AlignedAlloc {
         }
 };
 
+template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DBuffer {
+    private:
+        size_t idx;
+        size_t sz;
+        T *ptr;
+
+    public:
+        DBuffer(size_t size): idx(0), sz(size), ptr(nullptr) {
+            ptr = (T *) AlignedAlloc<A>::malloc(AlignedAlloc<A>::round(size * sizeof(T)) * 2);
+        }
+
+        ~DBuffer() {
+            AlignedAlloc<A>::free(ptr);
+        }
+
+        void swap() {
+            idx ^= 1;
+        }
+
+        T *data() {
+            return &ptr[idx * sz];
+        }
+
+        size_t size() {
+            return sz;
+        }
+
+        size_t bytes() {
+            return sz * sizeof(T);
+        }
+
+        void flush() {
+            if (ptr) {
+                SCB_InvalidateDCache_by_Addr(data(), bytes());
+            }
+        }
+};
+
 template <class, size_t> class DMABufPool;
 
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
