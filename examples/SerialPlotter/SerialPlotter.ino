@@ -2,6 +2,7 @@
 
 AdvancedADC adc(A0, A1);
 uint64_t last_millis = 0;
+uint32_t last_ts= 0;
 
 void setup() {
     Serial.begin(9600);
@@ -11,7 +12,7 @@ void setup() {
     }
 
     // Resolution, sample rate, number of samples per channel, queue depth.
-    if (!adc.begin(ADC_RESOLUTION_16, ADC_SAMPLE_RATE_48K, 16, 128)) {
+    if (!adc.begin(ADC_RESOLUTION_16, 16000, 32, 128)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }
@@ -23,8 +24,14 @@ void loop() {
 
         // Process the buffer.
         if (millis() - last_millis > 10) {
-          Serial.println(buf[0]);   // Sample from first channel
-          Serial.println(buf[1]);   // Sample from second channel
+            // Print timestamp.
+          if (last_ts){
+              Serial.println(buf.timestamp() - last_ts);
+          }
+          last_ts = buf.timestamp();
+
+          //Serial.println(buf[0]);   // Sample from first channel
+          //Serial.println(buf[1]);   // Sample from second channel
           last_millis = millis();
         }
 
@@ -37,7 +44,7 @@ void loop() {
     }
 
     if (millis() - last_millis > 100) {
-      Serial.println("No buffer");
-      last_millis = millis();
+      //Serial.println("No buffer");
+     // last_millis = millis();
     }
 }
