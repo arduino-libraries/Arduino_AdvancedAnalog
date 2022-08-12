@@ -6,6 +6,9 @@
 #endif
 
 template <size_t A> class AlignedAlloc {
+    // AlignedAlloc allocates extra memory before the aligned memory start, and uses that
+    // extra memory to stash the pointer returned from malloc. Note memory allocated with
+    // Aligned::alloc must be free'd later with Aligned::free.
     public:
         static void *malloc(size_t size) {
             void **ptr, *stashed;
@@ -37,7 +40,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DBuffer {
 
     public:
         DBuffer(size_t size): idx(0), sz(size), ptr(nullptr) {
-            ptr = (T *) AlignedAlloc<A>::malloc(AlignedAlloc<A>::round(size * sizeof(T)) * 2);
+            size_t bufsize = AlignedAlloc<A>::round(size * sizeof(T));
+            ptr = (T *) AlignedAlloc<A>::malloc(bufsize * 2);
         }
 
         ~DBuffer() {
@@ -76,12 +80,13 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         Pool *pool;
         size_t sz;
         T *ptr;
+        uint32_t ts;
 
     public:
         DMABuffer *next;
 
         DMABuffer(Pool *pool=nullptr, size_t size=0, T *mem=nullptr):
-            pool(pool), sz(size), ptr(mem), next(nullptr) {
+            pool(pool), sz(size), ptr(mem), ts(0), next(nullptr) {
         }
 
         T *data() {
@@ -100,6 +105,14 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
             if (ptr) {
                 SCB_InvalidateDCache_by_Addr(data(), bytes());
             }
+        }
+
+        uint32_t timestamp() {
+            return ts;
+        }
+
+        void timestamp(uint32_t ts) {
+            this->ts = ts;
         }
 
         void release() {
@@ -167,6 +180,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
 
         DMABuffer<T> *dequeue() {
             // Return a DMA buffer from the ready queue.
-            return readyq.pop();
+            DMABuffer<T> *dmabuf = readyq.pop();
+            dmabuf->flush();
+            return dmabuf;
         }
 };

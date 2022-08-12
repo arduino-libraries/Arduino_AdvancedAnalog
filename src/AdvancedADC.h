@@ -8,10 +8,6 @@ enum {
     ADC_RESOLUTION_16 = 16,
 };
 
-enum {
-    ADC_SAMPLE_RATE_48K = 48000,
-};
-
 struct adc_descr_t;
 typedef uint16_t ADCSample;
 typedef DMABuffer<ADCSample> &ADCBuffer;
@@ -30,6 +26,6 @@ class AdvancedADC {
         }
         bool available();
         ADCBuffer dequeue();
-        int begin(uint32_t bits, uint32_t fs, size_t n_samples, size_t n_buffers, adc_callback_t cb=nullptr);
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, adc_callback_t cb=nullptr);
         int stop();
 };
