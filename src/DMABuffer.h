@@ -180,8 +180,6 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
 
         DMABuffer<T> *dequeue() {
             // Return a DMA buffer from the ready queue.
-            DMABuffer<T> *dmabuf = readyq.pop();
-            dmabuf->flush();
-            return dmabuf;
+            return readyq.pop();
         }
 };

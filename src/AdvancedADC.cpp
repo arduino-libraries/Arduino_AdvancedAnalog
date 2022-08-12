@@ -228,6 +228,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     adc_descr->dmabuf->timestamp(HAL_GetTick());
 
     if (adc_descr->pool->writable()) {
+        // Make sure any cached data is discarded.
+        adc_descr->dmabuf->flush();
+
         // Move current DMA buffer to ready queue.
         adc_descr->pool->enqueue(adc_descr->dmabuf);
 
