@@ -24,6 +24,7 @@ class AdvancedADC {
                 adc_pins.push_back(analogPinToPinName(p));
             }
         }
+        ~AdvancedADC();
         bool available();
         ADCBuffer dequeue();
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, adc_callback_t cb=nullptr);

@@ -209,6 +209,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     descr = adc_descr_get((ADC_TypeDef *) instance);
     if (descr->pool != nullptr) {
         // This ADC/descriptor is already in use.
+        descr = nullptr;
         return 0;
     }
 
@@ -241,8 +242,25 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     return 1;
 }
 
+AdvancedADC::~AdvancedADC()
+{
+    stop();
+    if (descr) {
+        if (descr->pool) {
+            delete descr->pool;
+        }
+        descr->pool = nullptr;
+        descr->dmabuf= nullptr;
+        descr->callback = nullptr;
+    }
+}
+
 int AdvancedADC::stop()
 {
+    if (descr) {
+        HAL_TIM_Base_Stop(&descr->tim);
+        HAL_ADC_Stop_DMA(&descr->adc);
+    }
     return 1;
 }
 
