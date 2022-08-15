@@ -23,7 +23,7 @@ void loop() {
         ADCBuffer buf = adc.dequeue();
 
         // Process the buffer.
-        if (millis() - last_millis > 10) {
+        if (millis() - last_millis > 1) {
             // Print timestamp.
           if (last_ts){
               Serial.println(buf.timestamp() - last_ts);
