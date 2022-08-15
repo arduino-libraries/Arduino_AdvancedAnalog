@@ -101,7 +101,7 @@ static int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
     return 0;
 }
 
-static int hal_dma_config(DMA_HandleTypeDef *dma, DMABuffer<ADCSample> *dmabuf, IRQn_Type irqn) {
+static int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn) {
     // Enable DMA clock
     __HAL_RCC_DMA1_CLK_ENABLE();
 
@@ -195,6 +195,7 @@ DMABuffer<ADCSample> &AdvancedADC::dequeue() {
 
 int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, adc_callback_t cb) {
     size_t n_channels = adc_pins.size();
+    ADCName instance = (ADCName) pinmap_peripheral(adc_pins[0], PinMap_ADC);
 
     // Max of 5 channels can be read in sequence.
     if (n_channels > ADC_ARRAY_SIZE(ADC_RANK_LUT)) {
@@ -205,8 +206,14 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         return 0;
     }
 
+    // Check if this ADC/descriptor is already in use.
+    descr = adc_descr_get((ADC_TypeDef *) instance);
+    if (descr->pool != nullptr) {
+        descr = nullptr;
+        return 0;
+    }
+
     // All channels must share the same instance; if not, bail out
-    ADCName instance = (ADCName) pinmap_peripheral(adc_pins[0], PinMap_ADC);
     for (auto &pin : adc_pins) {
         auto _instance = pinmap_peripheral(pin, PinMap_ADC);
         if (_instance != instance) {
@@ -216,20 +223,16 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         pinmap_pinout(pin, PinMap_ADC);
     }
 
-    descr = adc_descr_get((ADC_TypeDef *) instance);
-    if (descr->pool != nullptr) {
-        // This ADC/descriptor is already in use.
-        descr = nullptr;
-        return 0;
-    }
-
     // Allocate DMA buffer pool.
     descr->pool = new DMABufPool<ADCSample>(n_samples * n_channels, n_buffers);
-    descr->dmabuf = descr->pool->allocate();
+    if (descr->pool == nullptr) {
+        return 0;
+    }
     descr->callback = cb;
+    descr->dmabuf = descr->pool->allocate();
 
     // Init and config DMA.
-    hal_dma_config(&descr->dma, descr->dmabuf, descr->dma_irqn);
+    hal_dma_config(&descr->dma, descr->dma_irqn);
 
     // Init and config ADC.
     hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins);

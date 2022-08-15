@@ -148,10 +148,12 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
             // Allocate aligned memory pool for DMA buffers pointers.
             pool.reset((uint8_t *) AlignedAlloc<A>::malloc(n_buffers * bufsize));
 
-            // Init DMA buffers using aligned pointers to dma buffers memory.
-            for (size_t i=0; i<n_buffers; i++) {
-                buffers[i] = DMABuffer<T>(this, n_samples, (T *) &pool.get()[i * bufsize]);
-                freeq.push(&buffers[i]);
+            if (buffers && pool) {
+                // Init DMA buffers using aligned pointers to dma buffers memory.
+                for (size_t i=0; i<n_buffers; i++) {
+                    buffers[i] = DMABuffer<T>(this, n_samples, (T *) &pool.get()[i * bufsize]);
+                    freeq.push(&buffers[i]);
+                }
             }
         }
 
