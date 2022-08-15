@@ -3,9 +3,11 @@
 #include "pinDefinitions.h"
 
 enum {
-    ADC_RESOLUTION_8  = 8,
-    ADC_RESOLUTION_12 = 12,
-    ADC_RESOLUTION_16 = 16,
+    ADC_RESOLUTION_8  = 0U,
+    ADC_RESOLUTION_10 = 1U,
+    ADC_RESOLUTION_12 = 2U,
+    ADC_RESOLUTION_14 = 3U,
+    ADC_RESOLUTION_16 = 4U,
 };
 
 struct adc_descr_t;

@@ -18,9 +18,15 @@ static adc_descr_t adc_descr_all[3] = {
     {{ADC3}, {DMA1_Stream3, {DMA_REQUEST_ADC3}}, DMA1_Stream3_IRQn, {TIM3}, ADC_EXTERNALTRIG_T3_TRGO},
 };
 
-static uint32_t ADC_INDEX_TO_RANK[] = {
+static uint32_t ADC_RANK_LUT[] = {
     ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
 };
+
+static uint32_t ADC_RES_LUT[] = {
+    ADC_RESOLUTION_8B, ADC_RESOLUTION_10B, ADC_RESOLUTION_12B, ADC_RESOLUTION_14B, ADC_RESOLUTION_16B,
+};
+
+#define ADC_ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 extern "C" {
 
@@ -136,7 +142,7 @@ static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t 
     }
 
     // ADC init
-    adc->Init.Resolution               = ADC_RESOLUTION_12B; // TODO fix
+    adc->Init.Resolution               = resolution;
     adc->Init.ClockPrescaler           = ADC_CLOCK_ASYNC_DIV1;
     adc->Init.ScanConvMode             = ADC_SCAN_ENABLE;
     adc->Init.EOCSelection             = ADC_EOC_SEQ_CONV;
@@ -163,7 +169,7 @@ static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t 
     for (size_t rank=0; rank<adc_pins.size(); rank++) {
         uint32_t function = pinmap_function(adc_pins[rank], PinMap_ADC);
         uint32_t channel = STM_PIN_CHANNEL(function);
-        sConfig.Rank     = ADC_INDEX_TO_RANK[rank];
+        sConfig.Rank     = ADC_RANK_LUT[rank];
         sConfig.Channel  = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
         HAL_ADC_ConfigChannel(adc, &sConfig);
     }
@@ -191,7 +197,11 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     size_t n_channels = adc_pins.size();
 
     // Max of 5 channels can be read in sequence.
-    if (n_channels > 5 ) {
+    if (n_channels > ADC_ARRAY_SIZE(ADC_RANK_LUT)) {
+        return 0;
+    }
+
+    if (resolution >= ADC_ARRAY_SIZE(ADC_RES_LUT)) {
         return 0;
     }
 
@@ -222,7 +232,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     hal_dma_config(&descr->dma, descr->dmabuf, descr->dma_irqn);
 
     // Init and config ADC.
-    hal_adc_config(&descr->adc, resolution, descr->tim_trig, adc_pins);
+    hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins);
 
     // Link DMA handle to ADC handle, and start the ADC.
     __HAL_LINKDMA(&descr->adc, DMA_Handle, descr->dma);
