@@ -15,11 +15,11 @@ typedef mbed::Callback<void()>  adc_callback_t;
 
 class AdvancedADC {
     private:
-        adc_descr_t *adc_descr;
+        adc_descr_t *descr;
         std::vector<PinName> adc_pins;
 
     public:
-        template <typename ... T> AdvancedADC(pin_size_t p0, T ... args): adc_descr(nullptr) {
+        template <typename ... T> AdvancedADC(pin_size_t p0, T ... args): descr(nullptr) {
             for (auto p : {p0, args...}) {
                 adc_pins.push_back(analogPinToPinName(p));
             }
