@@ -8,8 +8,8 @@ struct adc_descr_t {
     TIM_HandleTypeDef tim;
     uint32_t  tim_trig;
     adc_callback_t callback;
-    DMABufPool<ADCSample> *pool;
-    DMABuffer<ADCSample>  *dmabuf;
+    DMABufPool<sample_t> *pool;
+    DMABuffer<sample_t>  *dmabuf;
 };
 
 static adc_descr_t adc_descr_all[3] = {
@@ -70,7 +70,7 @@ static int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
     uint32_t t_clk = hal_tim_freq(tim);
 
     tim->Init.Period             = (t_div / t_freq) - 1;
-    tim->Init.Prescaler          = (t_clk / t_div) - 1;
+    tim->Init.Prescaler          = (t_clk / t_div ) - 1;
     tim->Init.CounterMode        = TIM_COUNTERMODE_UP;
     tim->Init.ClockDivision      = TIM_CLOCKDIVISION_DIV1;
     tim->Init.RepetitionCounter  = 0;
@@ -184,8 +184,8 @@ bool AdvancedADC::available() {
     return false;
 }
 
-DMABuffer<ADCSample> &AdvancedADC::dequeue() {
-    static DMABuffer<ADCSample> NULLBUF;
+DMABuffer<sample_t> &AdvancedADC::read() {
+    static DMABuffer<sample_t> NULLBUF;
     if (descr != nullptr) {
         return *descr->pool->dequeue();
     } else {
@@ -224,7 +224,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufPool<ADCSample>(n_samples * n_channels, n_buffers);
+    descr->pool = new DMABufPool<sample_t>(n_samples * n_channels, n_buffers);
     if (descr->pool == nullptr) {
         return 0;
     }
@@ -287,7 +287,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
 
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
-        descr->dmabuf->flush();
+        descr->dmabuf->invalidate();
 
         // Move current DMA buffer to ready queue.
         descr->pool->enqueue(descr->dmabuf);

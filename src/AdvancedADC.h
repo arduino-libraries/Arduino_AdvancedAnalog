@@ -11,8 +11,8 @@ enum {
 };
 
 struct adc_descr_t;
-typedef uint16_t ADCSample;
-typedef DMABuffer<ADCSample> &ADCBuffer;
+typedef uint16_t sample_t;
+typedef DMABuffer<sample_t>     &DMABuf;
 typedef mbed::Callback<void()>  adc_callback_t;
 
 class AdvancedADC {
@@ -28,7 +28,7 @@ class AdvancedADC {
         }
         ~AdvancedADC();
         bool available();
-        ADCBuffer dequeue();
+        DMABuf read();
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, adc_callback_t cb=nullptr);
         int stop();
 };
