@@ -1,3 +1,5 @@
+#ifndef __DMA_BUFFER_H__
+#define __DMA_BUFFER_H__
 #include "Arduino.h"
 #include "Queue.h"
 
@@ -32,9 +34,9 @@ template <size_t A> class AlignedAlloc {
         }
 };
 
-template <class, size_t> class DMABufPool;
+template <class, size_t> class DMABufferPool;
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
-    typedef DMABufPool<T, A> Pool;
+    typedef DMABufferPool<T, A> Pool;
 
     private:
         Pool *pool;
@@ -95,7 +97,7 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         }
 };
 
-template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
+template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
     private:
         LLQueue<DMABuffer<T>*> freeq;
         LLQueue<DMABuffer<T>*> readyq;
@@ -103,7 +105,7 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
     public:
-        DMABufPool(size_t n_samples, size_t n_buffers):
+        DMABufferPool(size_t n_samples, size_t n_buffers):
             buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
 
             size_t bufsize = AlignedAlloc<A>::round(n_samples * sizeof(T));
@@ -151,3 +153,4 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufPool {
             return readyq.pop();
         }
 };
+#endif //__DMA_BUFFER_H__

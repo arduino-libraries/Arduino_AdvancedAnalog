@@ -1,3 +1,5 @@
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 #include "Arduino.h"
 
 template <class T> class LLQueue {
@@ -81,3 +83,4 @@ template <class T> class CircularQueue {
             return T();
         }
 };
+#endif //__QUEUE_H__

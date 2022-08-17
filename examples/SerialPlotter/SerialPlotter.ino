@@ -20,7 +20,7 @@ void setup() {
 
 void loop() {
     if (adc.available()) {
-        DMABuf buf = adc.read();
+        SampleBuffer buf = adc.read();
 
         // Process the buffer.
         if (millis() - last_millis > 1) {
