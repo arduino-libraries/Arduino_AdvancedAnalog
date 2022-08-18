@@ -135,6 +135,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     if (descr->pool == nullptr) {
         return 0;
     }
+    descr->callback = callback;
     descr->resolution = DAC_RES_LUT[resolution];
 
     // Init and config DMA.
