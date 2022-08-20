@@ -111,11 +111,8 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
 int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers, user_callback_t callback) {
     size_t n_channels = dac_pins.size();
 
-    if (n_channels > 1) {
-        return 0;
-    }
-
-    if (resolution >= _ARRAY_SIZE(DAC_RES_LUT)) {
+    // Sanity checks.
+    if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT)) {
         return 0;
     }
 
@@ -131,7 +128,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
         return 0;
     }
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufferPool<Sample>(n_samples, 1, n_buffers);
+    descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
     if (descr->pool == nullptr) {
         return 0;
     }

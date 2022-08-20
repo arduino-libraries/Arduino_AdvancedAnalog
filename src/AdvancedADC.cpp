@@ -122,12 +122,8 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     size_t n_channels = adc_pins.size();
     ADCName instance = (ADCName) pinmap_peripheral(adc_pins[0], PinMap_ADC);
 
-    // Max of 5 channels can be read in sequence.
-    if (n_channels > _ARRAY_SIZE(ADC_RANK_LUT)) {
-        return 0;
-    }
-
-    if (resolution >= _ARRAY_SIZE(ADC_RES_LUT)) {
+    // Sanity checks.
+    if (resolution >= AN_ARRAY_SIZE(ADC_RES_LUT)) {
         return 0;
     }
 

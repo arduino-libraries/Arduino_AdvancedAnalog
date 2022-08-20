@@ -20,5 +20,8 @@ typedef uint16_t                Sample;     // Sample type used for ADC/DAC.
 typedef DMABuffer<Sample>       &SampleBuffer;
 typedef mbed::Callback<void()>  user_callback_t;
 
-#define _ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#define AN_MAX_ADC_CHANNELS     (5)
+#define AN_MAX_DAC_CHANNELS     (1)
+#define AN_ARRAY_SIZE(a)        (sizeof(a) / sizeof(a[0]))
+
 #endif  // __ADVANCED_ANALOG_H__
