@@ -204,6 +204,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     // TODO: Should move to timer IRQ.
     descr->dmabuf->timestamp(HAL_GetTick());
 
+    // Currently, all buffers are interleaved.
+    descr->dmabuf->setflags(DMA_BUFFER_INTRLVD);
+
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
         descr->dmabuf->invalidate();
@@ -213,6 +216,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
 
         // Allocate a new free buffer.
         descr->dmabuf = descr->pool->allocate();
+    } else {
+        descr->dmabuf->setflags(DMA_BUFFER_DISCONT);
     }
 
     // Update the next DMA target pointer.

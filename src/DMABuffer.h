@@ -34,7 +34,13 @@ template <size_t A> class AlignedAlloc {
         }
 };
 
+enum {
+    DMA_BUFFER_DISCONT  = (1 << 0),
+    DMA_BUFFER_INTRLVD  = (1 << 1),
+};
+
 template <class, size_t> class DMABufferPool;
+
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
     typedef DMABufferPool<T, A> Pool;
 
@@ -43,12 +49,13 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         size_t sz;
         T *ptr;
         uint32_t ts;
+        uint32_t flags;
 
     public:
         DMABuffer *next;
 
         DMABuffer(Pool *pool=nullptr, size_t size=0, T *mem=nullptr):
-            pool(pool), sz(size), ptr(mem), ts(0), next(nullptr) {
+            pool(pool), sz(size), ptr(mem), ts(0), flags(0), next(nullptr) {
         }
 
         T *data() {
@@ -87,6 +94,18 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
             if (pool && ptr) {
                 pool->release(this);
             }
+        }
+
+        void setflags(uint32_t f) {
+            flags |= f;
+        }
+
+        bool getflags(uint32_t f) {
+            return flags & f;
+        }
+
+        void clrflags(uint32_t f=0xFFFFFFFFU) {
+            flags &= (~f);
         }
 
         T operator[](size_t i) {
@@ -140,6 +159,7 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
 
         void release(DMABuffer<T> *buf) {
             // Return DMA buffer to the free queue.
+            buf->clrflags();
             freeq.push(buf);
         }
 
