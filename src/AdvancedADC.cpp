@@ -149,7 +149,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufferPool<Sample>(n_samples * n_channels, n_buffers);
+    descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
     if (descr->pool == nullptr) {
         return 0;
     }

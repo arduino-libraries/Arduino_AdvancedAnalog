@@ -46,7 +46,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
 
     private:
         Pool *pool;
-        size_t sz;
+        size_t n_samples;
+        size_t n_channels;
         T *ptr;
         uint32_t ts;
         uint32_t flags;
@@ -54,8 +55,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
     public:
         DMABuffer *next;
 
-        DMABuffer(Pool *pool=nullptr, size_t size=0, T *mem=nullptr):
-            pool(pool), sz(size), ptr(mem), ts(0), flags(0), next(nullptr) {
+        DMABuffer(Pool *pool=nullptr, size_t samples=0, size_t channels=0, T *mem=nullptr):
+            pool(pool), n_samples(samples), n_channels(channels), ptr(mem), ts(0), flags(0), next(nullptr) {
         }
 
         T *data() {
@@ -63,11 +64,11 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         }
 
         size_t size() {
-            return sz;
+            return n_samples * n_channels;
         }
 
         size_t bytes() {
-            return sz * sizeof(T);
+            return n_samples * n_channels * sizeof(T);
         }
 
         void flush() {
@@ -88,6 +89,10 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
 
         void timestamp(uint32_t ts) {
             this->ts = ts;
+        }
+
+        uint32_t channels() {
+            return n_channels;
         }
 
         void release() {
@@ -124,10 +129,10 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
     public:
-        DMABufferPool(size_t n_samples, size_t n_buffers):
+        DMABufferPool(size_t n_samples, size_t n_channels, size_t n_buffers):
             buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
 
-            size_t bufsize = AlignedAlloc<A>::round(n_samples * sizeof(T));
+            size_t bufsize = AlignedAlloc<A>::round(n_samples * n_channels *sizeof(T));
 
             // Allocate non-aligned memory for the DMA buffers objects.
             buffers.reset(new DMABuffer<T>[n_buffers]);
@@ -138,7 +143,7 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
             if (buffers && pool) {
                 // Init DMA buffers using aligned pointers to dma buffers memory.
                 for (size_t i=0; i<n_buffers; i++) {
-                    buffers[i] = DMABuffer<T>(this, n_samples, (T *) &pool.get()[i * bufsize]);
+                    buffers[i] = DMABuffer<T>(this, n_samples, n_channels, (T *) &pool.get()[i * bufsize]);
                     freeq.push(&buffers[i]);
                 }
             }

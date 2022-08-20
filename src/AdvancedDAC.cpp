@@ -131,7 +131,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
         return 0;
     }
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufferPool<Sample>(n_samples, n_buffers);
+    descr->pool = new DMABufferPool<Sample>(n_samples, 1, n_buffers);
     if (descr->pool == nullptr) {
         return 0;
     }
