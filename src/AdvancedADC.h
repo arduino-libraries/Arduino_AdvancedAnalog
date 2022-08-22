@@ -1,7 +1,6 @@
 #include <array>
 #include "DMABuffer.h"
 #include "AdvancedAnalog.h"
-#include "pinDefinitions.h"
 
 struct adc_descr_t;
 

@@ -1,7 +1,6 @@
 #include <vector>
 #include "DMABuffer.h"
 #include "AdvancedAnalog.h"
-#include "pinDefinitions.h"
 
 struct dac_descr_t;
 

@@ -2,6 +2,7 @@
 #define __ADVANCED_ANALOG_H__
 #include "Arduino.h"
 #include "DMABuffer.h"
+#include "pinDefinitions.h"
 
 enum {
     DAC_RESOLUTION_8  = 0U,
