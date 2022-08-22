@@ -124,7 +124,9 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     }
 
     uint32_t function = pinmap_function(dac_pins[0], PinMap_DAC);
-    descr = dac_descr_get(STM_PIN_CHANNEL(function));
+    //descr = dac_descr_get(STM_PIN_CHANNEL(function));
+    // TODO: Seems there's a bug in pin mapping, until it's fixed using this workaround.
+    descr = dac_descr_get((dac_pins[0] == PA_4) ? DAC_CHANNEL_1 : DAC_CHANNEL_2);
     if (descr == nullptr || descr->pool) {
         return 0;
     }
@@ -203,7 +205,7 @@ void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *dac) {
     DAC_DMAConvCplt(&dac_descr_all[0].dma, DAC_CHANNEL_1);
 }
 
-void HAL_DAC_ConvCpltCallbackCh2(DAC_HandleTypeDef *dac) {
+void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *dac) {
     DAC_DMAConvCplt(&dac_descr_all[1].dma, DAC_CHANNEL_2);
 }
 
