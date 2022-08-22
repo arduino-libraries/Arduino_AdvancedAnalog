@@ -90,8 +90,12 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
 }
 
 void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
-    if (descr->dmabuf == nullptr) {
+    // NOTE: The following check is to ensure the pool has at least one
+    // more buffer before starting the DMA so that there's a buffer ready
+    // immediately after the first DMA transfer is complete.
+    if (descr->dmabuf == nullptr && descr->pool->readable()) {
         descr->dmabuf = &dmabuf;
+
         // Start DAC DMA.
         HAL_DAC_Start_DMA(descr->dac, descr->channel, (uint32_t*) descr->dmabuf->data(), descr->dmabuf->size(), descr->resolution);
 
@@ -101,7 +105,7 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
         // Start trigger timer.
         HAL_TIM_Base_Start(&descr->tim);
     } else {
-        descr->pool->enqueue(descr->dmabuf);
+        descr->pool->enqueue(&dmabuf);
     }
 }
 
