@@ -167,6 +167,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
 
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
+    HAL_TIM_Base_Start(&descr->tim);
     return 1;
 }
 

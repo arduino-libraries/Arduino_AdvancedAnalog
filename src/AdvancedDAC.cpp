@@ -92,9 +92,6 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
 void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
     if (descr->dmabuf == nullptr) {
         descr->dmabuf = &dmabuf;
-        // Stop trigger timer.
-        HAL_TIM_Base_Stop(&descr->tim);
-
         // Start DAC DMA.
         HAL_DAC_Start_DMA(descr->dac, descr->channel, (uint32_t*) descr->dmabuf->data(), descr->dmabuf->size(), descr->resolution);
 
@@ -148,9 +145,8 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
         __HAL_LINKDMA(descr->dac, DMA_Handle2, descr->dma);
     }
 
-    // Init, config and start the trigger timer.
+    // Init and config the trigger timer.
     hal_tim_config(&descr->tim, frequency);
-
     return 1;
 }
 
@@ -194,6 +190,7 @@ void DAC_DMAConvCplt(DMA_HandleTypeDef *dma, uint32_t channel) {
         // Update the next DMA target pointer.
         hal_dma_swap_memory(&descr->dma, descr->dmabuf->data());
     } else {
+        HAL_TIM_Base_Stop(&descr->tim);
         HAL_DAC_Stop_DMA(descr->dac, descr->channel);
     }
 }
