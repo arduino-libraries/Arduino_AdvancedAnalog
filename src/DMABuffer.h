@@ -113,11 +113,16 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
             flags &= (~f);
         }
 
-        T operator[](size_t i) {
-            if (ptr && i < size()) {
-                return data()[i];
-            }
-            return -1;
+        T& operator[](size_t i)
+        {
+            assert(ptr && i < size());
+            return ptr[i];
+        }
+
+        const T& operator[](size_t i) const
+        {
+            assert(ptr && i < size());
+            return ptr[i];
         }
 };
 
