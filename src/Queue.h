@@ -6,17 +6,23 @@ template <class T> class LLQueue {
     private:
         T head;
         T tail;
+        size_t _size;
 
     public:
-        LLQueue(): head(nullptr), tail(nullptr) {
+        LLQueue(): head(nullptr), tail(nullptr), _size(0) {
 
+        }
+
+        size_t size() {
+            return _size;
         }
 
         bool empty() {
-            return head == nullptr;
+            return !_size;
         }
 
         void push(T value) {
+            _size++;
             value->next = nullptr;
             if (head == nullptr) {
                 head = value;
@@ -28,6 +34,7 @@ template <class T> class LLQueue {
         }
 
         T pop() {
+            _size--;
             T value = head;
             if (head) {
                 head = head->next;
@@ -41,26 +48,31 @@ template <class T> class LLQueue {
 
 template <class T> class CircularQueue {
     private:
-        size_t size;
+        size_t _size;
+        size_t capacity;
         volatile size_t _head;
         volatile size_t _tail;
         std::unique_ptr<T[]> buffer;
     
     private:
         inline size_t next_pos(size_t x) {
-            return (((x) + 1) % (size));
+            return (((x) + 1) % (capacity));
         }
 
     public:
         CircularQueue(size_t size=0):
-            size(size), _head(0), _tail(0), buffer(nullptr) {
-            if (size) {
-                buffer.reset(new T[size]);
+            _size(0), capacity(size), _head(0), _tail(0), buffer(nullptr) {
+            if (capacity) {
+                buffer.reset(new T[capacity]);
             }
         }
 
         void reset() {
             _head = _tail = 0;
+        }
+
+        size_t size() {
+            return _size;
         }
 
         size_t empty() {
@@ -69,6 +81,7 @@ template <class T> class CircularQueue {
 
         void push(T value) {
             if (buffer && next_pos(_tail) != _head) {
+                _size++;
                 buffer[_tail] = value;
                 _tail = next_pos(_tail);
             }
@@ -76,6 +89,7 @@ template <class T> class CircularQueue {
 
         T pop() {
             if (buffer && _head != _tail) {
+                _size--;
                 T value = buffer[_head];
                 _head = next_pos(_head);
                 return value;

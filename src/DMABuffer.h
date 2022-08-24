@@ -128,8 +128,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
 
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
     private:
-        LLQueue<DMABuffer<T>*> freeq;
-        LLQueue<DMABuffer<T>*> readyq;
+        LLQueue<DMABuffer<T>*> wr_queue;
+        LLQueue<DMABuffer<T>*> rd_queue;
         std::unique_ptr<DMABuffer<T>[]> buffers;
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
@@ -137,6 +137,7 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
         DMABufferPool(size_t n_samples, size_t n_channels, size_t n_buffers):
             buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
 
+            // Round up to next multiple of alignment.
             size_t bufsize = AlignedAlloc<A>::round(n_samples * n_channels *sizeof(T));
 
             // Allocate non-aligned memory for the DMA buffers objects.
@@ -149,38 +150,38 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
                 // Init DMA buffers using aligned pointers to dma buffers memory.
                 for (size_t i=0; i<n_buffers; i++) {
                     buffers[i] = DMABuffer<T>(this, n_samples, n_channels, (T *) &pool.get()[i * bufsize]);
-                    freeq.push(&buffers[i]);
+                    wr_queue.push(&buffers[i]);
                 }
             }
         }
 
-        bool writable() {
-            return !freeq.empty();
+        size_t writable() {
+            return wr_queue.size();
         }
 
-        bool readable() {
-            return !readyq.empty();
+        size_t readable() {
+            return rd_queue.size();
         }
 
         DMABuffer<T> *allocate() {
             // Get a DMA buffer from the free queue.
-            return freeq.pop();
+            return wr_queue.pop();
         }
 
         void release(DMABuffer<T> *buf) {
             // Return DMA buffer to the free queue.
             buf->clrflags();
-            freeq.push(buf);
+            wr_queue.push(buf);
         }
 
         void enqueue(DMABuffer<T> *buf) {
             // Add DMA buffer to the ready queue.
-            readyq.push(buf);
+            rd_queue.push(buf);
         }
 
         DMABuffer<T> *dequeue() {
             // Return a DMA buffer from the ready queue.
-            return readyq.pop();
+            return rd_queue.pop();
         }
 };
 #endif //__DMA_BUFFER_H__
