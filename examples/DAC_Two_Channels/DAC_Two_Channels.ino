@@ -1,8 +1,8 @@
 // This example outputs an 8KHz square wave on A12/DAC0 and 16KHz square wave on ADC13/DAC1.
 #include "AdvancedDAC.h"
 
-AdvancedDAC dac_1(A12);
-AdvancedDAC dac_2(A13);
+AdvancedDAC dac1(A12);
+AdvancedDAC dac2(A13);
 
 void setup() {
     Serial.begin(9600);
@@ -11,12 +11,12 @@ void setup() {
 
     }
 
-    if (!dac_1.begin(DAC_RESOLUTION_12, 8000, 32, 64)) {
+    if (!dac1.begin(DAC_RESOLUTION_12, 8000, 32, 64)) {
         Serial.println("Failed to start DAC1 !");
         while (1);
     }
 
-    if (!dac_2.begin(DAC_RESOLUTION_12, 16000, 32, 64)) {
+    if (!dac2.begin(DAC_RESOLUTION_12, 16000, 32, 64)) {
         Serial.println("Failed to start DAC2 !");
         while (1);
     }
@@ -39,6 +39,6 @@ void dac_output_sq(AdvancedDAC &dac_out) {
 }
 
 void loop() {
-  dac_output_sq(dac_1);
-  dac_output_sq(dac_2);
+  dac_output_sq(dac1);
+  dac_output_sq(dac2);
 }
