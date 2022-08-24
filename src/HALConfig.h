@@ -4,6 +4,7 @@
 #include "AdvancedAnalog.h"
 int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq);
 int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn, uint32_t direction);
-void hal_dma_enable_dbm(DMA_HandleTypeDef *dma);
+size_t hal_dma_get_ct(DMA_HandleTypeDef *dma);
+void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0 = nullptr, void *m1 = nullptr);
 void hal_dma_swap_memory(DMA_HandleTypeDef *dma, void *addr);
 #endif  // __HAL_CONFIG_H__
