@@ -11,8 +11,8 @@ struct dac_descr_t {
     uint32_t tim_trig;
     uint32_t resolution;
     user_callback_t callback;
-    DMABuffer<Sample> *dmabuf;
     DMABufferPool<Sample> *pool;
+    DMABuffer<Sample> *dmabuf[2];
 };
 
 // NOTE: Both DAC channel descriptors share the same DAC handle.
@@ -46,6 +46,19 @@ static dac_descr_t *dac_descr_get(uint32_t channel) {
         return &dac_descr_all[1];
     }
     return NULL;
+}
+
+static void dac_descr_shutdown(dac_descr_t *descr) {
+    if (descr) {
+        HAL_TIM_Base_Stop(&descr->tim);
+        HAL_DAC_Stop_DMA(descr->dac, descr->channel);
+        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
+            if (descr->dmabuf[i]) {
+                descr->dmabuf[i]->release();
+                descr->dmabuf[i] = nullptr;
+            }
+        }
+    }
 }
 
 static int hal_dac_config(DAC_HandleTypeDef *dac, uint32_t channel, uint32_t trigger) {
@@ -89,23 +102,27 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
     return NULLBUF;
 }
 
+extern HAL_StatusTypeDef HAL_DAC_Start_DMA_MB(DAC_HandleTypeDef *hdac, uint32_t Channel,
+        uint32_t *pData, uint32_t *pData2, uint32_t Length, uint32_t Alignment);
+
 void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
-    // NOTE: The following check is to ensure the pool has at least one
-    // more buffer before starting the DMA so that there's a buffer ready
-    // immediately after the first DMA transfer is complete.
-    if (descr->dmabuf == nullptr && descr->pool->readable()) {
-        descr->dmabuf = &dmabuf;
+    // Make sure any cached data is flushed.
+    dmabuf.flush();
+    descr->pool->enqueue(&dmabuf);
+
+    if (descr->dmabuf[0] == nullptr && descr->pool->readable() > 2) {
+        descr->dmabuf[0] = descr->pool->dequeue();
+        descr->dmabuf[1] = descr->pool->dequeue();
 
         // Start DAC DMA.
-        HAL_DAC_Start_DMA(descr->dac, descr->channel, (uint32_t*) descr->dmabuf->data(), descr->dmabuf->size(), descr->resolution);
+        HAL_DAC_Start_DMA(descr->dac, descr->channel,
+        (uint32_t *) descr->dmabuf[0]->data(), descr->dmabuf[0]->size(), descr->resolution);
 
         // Re/enable DMA double buffer mode.
-        hal_dma_enable_dbm(&descr->dma);
+        hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
 
         // Start trigger timer.
         HAL_TIM_Base_Start(&descr->tim);
-    } else {
-        descr->pool->enqueue(&dmabuf);
     }
 }
 
@@ -169,10 +186,7 @@ AdvancedDAC::~AdvancedDAC()
 
 int AdvancedDAC::stop()
 {
-    if (descr) {
-        HAL_TIM_Base_Stop(&descr->tim);
-        HAL_DAC_Stop_DMA(descr->dac, descr->channel);
-    }
+    dac_descr_shutdown(descr);
     return 1;
 }
 
@@ -180,24 +194,16 @@ extern "C" {
 
 void DAC_DMAConvCplt(DMA_HandleTypeDef *dma, uint32_t channel) {
     dac_descr_t *descr = dac_descr_get(channel);
-
-    if (descr->dmabuf) {
-        descr->dmabuf->release();
-        descr->dmabuf = nullptr;
-    }
-
+    // Release the DMA buffer that was just done, allocate a new one,
+    // and update the next DMA memory address target.
     if (descr->pool->readable()) {
-        // Get next buffer from the pool.
-        descr->dmabuf = descr->pool->dequeue();
-
-        // Make sure any cached data is flushed.
-        descr->dmabuf->flush();
-
-        // Update the next DMA target pointer.
-        hal_dma_swap_memory(&descr->dma, descr->dmabuf->data());
+        // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
+        size_t ct = ! hal_dma_get_ct(dma);
+        descr->dmabuf[ct]->release();
+        descr->dmabuf[ct] = descr->pool->dequeue();
+        hal_dma_update_memory(dma, descr->dmabuf[ct]->data());
     } else {
-        HAL_TIM_Base_Stop(&descr->tim);
-        HAL_DAC_Stop_DMA(descr->dac, descr->channel);
+        dac_descr_shutdown(descr);
     }
 }
 

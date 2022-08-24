@@ -84,12 +84,23 @@ void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0, void *m1)
     // in double/multi buffer mode. The HAL_x_DMA_Start function clears the double buffer bit,
     // so we disable the stream, re-set the DMB bit, and re-enable the stream. This should be
     // safe to do, assuming the ADC/DAC trigger timer is Not running.
-    __HAL_DMA_DISABLE_IT(dma, (DMA_IT_TC | DMA_IT_TE | DMA_IT_DME | DMA_IT_HT));
     __HAL_DMA_DISABLE(dma);
+
+    // Clear all interrupt flags
+    volatile uint32_t *ifc;
+    ifc = (uint32_t *)((uint32_t)(dma->StreamBaseAddress + 8U));
+    *ifc = 0x3FUL << (dma->StreamIndex & 0x1FU);
+
+    // Set double buffer mode bit.
     ((DMA_Stream_TypeDef *) dma->Instance)->CR  |= DMA_SxCR_DBM;
+
+    // Set M0, and M1 if provided.
     ((DMA_Stream_TypeDef *) dma->Instance)->M0AR = (uint32_t) m0;
     ((DMA_Stream_TypeDef *) dma->Instance)->M1AR = (uint32_t) m1;
-    __HAL_DMA_ENABLE_IT(dma, (DMA_IT_TC | DMA_IT_TE | DMA_IT_DME | DMA_IT_HT));
+
+    // Set the second buffer transfer complete callback.
+    dma->XferM1CpltCallback = dma->XferCpltCallback;
+
     __HAL_DMA_ENABLE(dma);
 }
 
@@ -99,7 +110,7 @@ size_t hal_dma_get_ct(DMA_HandleTypeDef *dma)
     return !!(((DMA_Stream_TypeDef *) dma->Instance)->CR & DMA_SxCR_CT);
 }
 
-void hal_dma_swap_memory(DMA_HandleTypeDef *dma, void *addr)
+void hal_dma_update_memory(DMA_HandleTypeDef *dma, void *addr)
 {
     // Update the next DMA target pointer.
     if (((DMA_Stream_TypeDef *) dma->Instance)->CR & DMA_SxCR_CT) {
@@ -107,112 +118,4 @@ void hal_dma_swap_memory(DMA_HandleTypeDef *dma, void *addr)
     } else {
         HAL_DMAEx_ChangeMemory(dma, (uint32_t) addr, MEMORY1);
     }
-}
-
-// Copy of DAC_Start_DMA modified to start multibuffers.
-HAL_StatusTypeDef HAL_DAC_Start_DMA_MB(DAC_HandleTypeDef *hdac, uint32_t Channel,
-        uint32_t *pData, uint32_t *pData2, uint32_t Length, uint32_t Alignment)
-{
-    HAL_StatusTypeDef status;
-    uint32_t tmpreg = 0U;
-
-    /* Check the parameters */
-    assert_param(IS_DAC_CHANNEL(Channel));
-    assert_param(IS_DAC_ALIGN(Alignment));
-
-    /* Process locked */
-    __HAL_LOCK(hdac);
-
-    /* Change DAC state */
-    hdac->State = HAL_DAC_STATE_BUSY;
-
-    if (Channel == DAC_CHANNEL_1) {
-        /* Set the DMA transfer complete callback for channel1 */
-        hdac->DMA_Handle1->XferCpltCallback = DAC_DMAConvCpltCh1;
-
-        /* Set the DMA half transfer complete callback for channel1 */
-        hdac->DMA_Handle1->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh1;
-
-        /* Set the DMA error callback for channel1 */
-        hdac->DMA_Handle1->XferErrorCallback = DAC_DMAErrorCh1;
-
-        /* Enable the selected DAC channel1 DMA request */
-        SET_BIT(hdac->Instance->CR, DAC_CR_DMAEN1);
-
-        /* Case of use of channel 1 */
-        switch (Alignment) {
-            case DAC_ALIGN_12B_R:
-                /* Get DHR12R1 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR12R1;
-                break;
-            case DAC_ALIGN_12B_L:
-                /* Get DHR12L1 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR12L1;
-                break;
-            case DAC_ALIGN_8B_R:
-                /* Get DHR8R1 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR8R1;
-                break;
-            default:
-                break;
-        }
-    } else {
-        /* Set the DMA transfer complete callback for channel2 */
-        hdac->DMA_Handle2->XferCpltCallback = DAC_DMAConvCpltCh2;
-
-        /* Set the DMA half transfer complete callback for channel2 */
-        hdac->DMA_Handle2->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh2;
-
-        /* Set the DMA error callback for channel2 */
-        hdac->DMA_Handle2->XferErrorCallback = DAC_DMAErrorCh2;
-
-        /* Enable the selected DAC channel2 DMA request */
-        SET_BIT(hdac->Instance->CR, DAC_CR_DMAEN2);
-
-        /* Case of use of channel 2 */
-        switch (Alignment) {
-            case DAC_ALIGN_12B_R:
-                /* Get DHR12R2 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR12R2;
-                break;
-            case DAC_ALIGN_12B_L:
-                /* Get DHR12L2 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR12L2;
-                break;
-            case DAC_ALIGN_8B_R:
-                /* Get DHR8R2 address */
-                tmpreg = (uint32_t)&hdac->Instance->DHR8R2;
-                break;
-            default:
-                break;
-        }
-    }
-
-    /* Enable the DMA Stream */
-    if (Channel == DAC_CHANNEL_1) {
-        /* Enable the DAC DMA underrun interrupt */
-        __HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR1);
-
-        /* Enable the DMA Stream */
-        status = HAL_DMAEx_MultiBufferStart_IT(hdac->DMA_Handle1, (uint32_t)pData, tmpreg, (uint32_t)pData2, Length);
-    } else {
-        /* Enable the DAC DMA underrun interrupt */
-        __HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR2);
-
-        /* Enable the DMA Stream */
-        status = HAL_DMAEx_MultiBufferStart_IT(hdac->DMA_Handle2, (uint32_t)pData, tmpreg, (uint32_t)pData2, Length);
-    }
-
-    /* Process Unlocked */
-    __HAL_UNLOCK(hdac);
-
-    if (status == HAL_OK) {
-        /* Enable the Peripheral */
-        __HAL_DAC_ENABLE(hdac, Channel);
-    } else {
-        hdac->ErrorCode |= HAL_DAC_ERROR_DMA;
-    }
-
-    /* Return function status */
-    return status;
 }

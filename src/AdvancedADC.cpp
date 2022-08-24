@@ -9,8 +9,8 @@ struct adc_descr_t {
     TIM_HandleTypeDef tim;
     uint32_t  tim_trig;
     user_callback_t callback;
-    DMABuffer<Sample> *dmabuf;
     DMABufferPool<Sample> *pool;
+    DMABuffer<Sample> *dmabuf[2];
 };
 
 static adc_descr_t adc_descr_all[3] = {
@@ -150,7 +150,8 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         return 0;
     }
     descr->callback = callback;
-    descr->dmabuf = descr->pool->allocate();
+    descr->dmabuf[0] = descr->pool->allocate();
+    descr->dmabuf[1] = descr->pool->allocate();
 
     // Init and config DMA.
     hal_dma_config(&descr->dma, descr->dma_irqn, DMA_PERIPH_TO_MEMORY);
@@ -160,10 +161,10 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
 
     // Link DMA handle to ADC handle, and start the ADC.
     __HAL_LINKDMA(&descr->adc, DMA_Handle, descr->dma);
-    HAL_ADC_Start_DMA(&descr->adc, (uint32_t *) descr->dmabuf->data(), descr->dmabuf->size());
+    HAL_ADC_Start_DMA(&descr->adc, (uint32_t *) descr->dmabuf[0]->data(), descr->dmabuf[0]->size());
 
     // Re/enable DMA double buffer mode.
-    hal_dma_enable_dbm(&descr->dma);
+    hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
 
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
@@ -179,8 +180,13 @@ AdvancedADC::~AdvancedADC()
             delete descr->pool;
         }
         descr->pool = nullptr;
-        descr->dmabuf= nullptr;
         descr->callback = nullptr;
+        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
+            if (descr->dmabuf[i]) {
+                descr->dmabuf[i]->release();
+                descr->dmabuf[i] = nullptr;
+            }
+        }
     }
 }
 
@@ -197,29 +203,31 @@ extern "C" {
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     adc_descr_t *descr = adc_descr_get(adc->Instance);
 
-    // Timestamp the buffer.
-    // TODO: Should move to timer IRQ.
-    descr->dmabuf->timestamp(HAL_GetTick());
+    // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
+    size_t ct = ! hal_dma_get_ct(&descr->dma);
+
+    // Timestamp the buffer. TODO: Should move to timer IRQ.
+    descr->dmabuf[ct]->timestamp(HAL_GetTick());
 
     // Currently, all buffers are interleaved.
-    descr->dmabuf->setflags(DMA_BUFFER_INTRLVD);
+    descr->dmabuf[ct]->setflags(DMA_BUFFER_INTRLVD);
 
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
-        descr->dmabuf->invalidate();
+        descr->dmabuf[ct]->invalidate();
 
         // Move current DMA buffer to ready queue.
-        descr->pool->enqueue(descr->dmabuf);
+        descr->pool->enqueue(descr->dmabuf[ct]);
 
         // Allocate a new free buffer.
-        descr->dmabuf = descr->pool->allocate();
+        descr->dmabuf[ct] = descr->pool->allocate();
     } else {
-        descr->dmabuf->setflags(DMA_BUFFER_DISCONT);
+        descr->dmabuf[ct]->setflags(DMA_BUFFER_DISCONT);
     }
 
     // Update the next DMA target pointer.
     // NOTE: If the pool was empty, the same buffer is reused.
-    hal_dma_swap_memory(&descr->dma, descr->dmabuf->data());
+    hal_dma_update_memory(&descr->dma, descr->dmabuf[ct]->data());
 }
 
 } // extern C
