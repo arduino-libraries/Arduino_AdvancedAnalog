@@ -27,6 +27,10 @@ static uint32_t DAC_RES_LUT[] = {
     DAC_ALIGN_8B_R, DAC_ALIGN_12B_R,
 };
 
+static uint32_t DAC_CHAN_LUT[] = {
+    DAC_CHANNEL_1, DAC_CHANNEL_2,
+};
+
 extern "C" {
 
 void DMA1_Stream4_IRQHandler() {
@@ -139,9 +143,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     }
 
     uint32_t function = pinmap_function(dac_pins[0], PinMap_DAC);
-    //descr = dac_descr_get(STM_PIN_CHANNEL(function));
-    // TODO: Seems there's a bug in pin mapping, until it's fixed using this workaround.
-    descr = dac_descr_get((dac_pins[0] == PA_4) ? DAC_CHANNEL_1 : DAC_CHANNEL_2);
+    descr = dac_descr_get(DAC_CHAN_LUT[STM_PIN_CHANNEL(function) - 1]);
     if (descr == nullptr || descr->pool) {
         return 0;
     }
