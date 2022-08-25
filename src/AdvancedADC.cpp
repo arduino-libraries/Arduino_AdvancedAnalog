@@ -80,7 +80,7 @@ static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t 
     adc->Init.LeftBitShift             = ADC_LEFTBITSHIFT_NONE;
     adc->Init.OversamplingMode         = DISABLE;
     adc->Init.ExternalTrigConv         = timer_trigger;
-    adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISINGFALLING;
+    adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISING;
     adc->Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
 
     HAL_ADC_Init(adc);
