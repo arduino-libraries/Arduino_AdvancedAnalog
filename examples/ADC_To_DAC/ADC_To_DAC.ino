@@ -11,12 +11,12 @@ void setup() {
     Serial.begin(9600);
 
     // Resolution, sample rate, number of samples per channel, queue depth.
-    if (!adc0.begin(ADC_RESOLUTION_12, 8000, 32, 64)) {
+    if (!adc0.begin(AN_RESOLUTION_12, 8000, 32, 64)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }
 
-    if (!dac1.begin(DAC_RESOLUTION_12, 8000, 32 * 2, 64)) {
+    if (!dac1.begin(AN_RESOLUTION_12, 8000, 32 * 2, 64)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }

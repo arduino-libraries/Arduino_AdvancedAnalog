@@ -24,7 +24,7 @@ static dac_descr_t dac_descr_all[] = {
 };
 
 static uint32_t DAC_RES_LUT[] = {
-    DAC_ALIGN_8B_R, DAC_ALIGN_12B_R,
+    DAC_ALIGN_8B_R, DAC_ALIGN_12B_R, DAC_ALIGN_12B_R
 };
 
 static uint32_t DAC_CHAN_LUT[] = {

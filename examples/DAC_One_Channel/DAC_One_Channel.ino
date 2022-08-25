@@ -10,7 +10,7 @@ void setup() {
 
     }
 
-    if (!dac1.begin(DAC_RESOLUTION_12, 8000, 32, 64)) {
+    if (!dac1.begin(AN_RESOLUTION_12, 8000, 32, 64)) {
         Serial.println("Failed to start DAC1 !");
         while (1);
     }

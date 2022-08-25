@@ -15,7 +15,7 @@ static size_t lut_size = sizeof(lut) / sizeof(lut[0]);
 void setup() {
     Serial.begin(9600);
 
-    if (!dac1.begin(DAC_RESOLUTION_12, 16000 / lut_size * 2, 32, 128)) {
+    if (!dac1.begin(AN_RESOLUTION_12, 16000 / lut_size * 2, 32, 128)) {
         Serial.println("Failed to start DAC1 !");
         while (1);
     }

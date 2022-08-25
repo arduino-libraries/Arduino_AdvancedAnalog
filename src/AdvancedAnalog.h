@@ -5,16 +5,11 @@
 #include "pinDefinitions.h"
 
 enum {
-    DAC_RESOLUTION_8  = 0U,
-    DAC_RESOLUTION_12 = 1U,
-};
-
-enum {
-    ADC_RESOLUTION_8  = 0U,
-    ADC_RESOLUTION_10 = 1U,
-    ADC_RESOLUTION_12 = 2U,
-    ADC_RESOLUTION_14 = 3U,
-    ADC_RESOLUTION_16 = 4U,
+    AN_RESOLUTION_8  = 0U,
+    AN_RESOLUTION_10 = 1U,
+    AN_RESOLUTION_12 = 2U,
+    AN_RESOLUTION_14 = 3U,
+    AN_RESOLUTION_16 = 4U,
 };
 
 typedef uint16_t                Sample;     // Sample type used for ADC/DAC.
