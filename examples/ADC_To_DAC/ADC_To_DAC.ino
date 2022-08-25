@@ -1,6 +1,5 @@
 // This example outputs an 8KHz square wave on DAC1.
 // Connect ADC channel A0 to VDD and channel A1 to GND.
-// Note DAC's sample size is double, because ADC samples 2 channels,
 #include "AdvancedADC.h"
 #include "AdvancedDAC.h"
 
@@ -16,7 +15,7 @@ void setup() {
         while (1);
     }
 
-    if (!dac1.begin(AN_RESOLUTION_12, 8000, 32 * 2, 64)) {
+    if (!dac1.begin(AN_RESOLUTION_12, 16000, 32, 64)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }
