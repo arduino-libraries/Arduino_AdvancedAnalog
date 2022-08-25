@@ -6,18 +6,18 @@ struct adc_descr_t;
 
 class AdvancedADC {
     private:
+        size_t n_channels;
         adc_descr_t *descr;
         std::array<PinName, AN_MAX_ADC_CHANNELS> adc_pins;
 
     public:
         template <typename ... T>
-        AdvancedADC(pin_size_t p0, T ... args): descr(nullptr) {
+        AdvancedADC(pin_size_t p0, T ... args): n_channels(0), descr(nullptr) {
             static_assert(sizeof ...(args) < AN_MAX_ADC_CHANNELS,
                     "A maximum of 5 channels can be sampled successively.");
 
-            size_t i=0;
             for (auto p : {p0, args...}) {
-                adc_pins[i++] = analogPinToPinName(p);
+                adc_pins[n_channels++] = analogPinToPinName(p);
             }
         }
         ~AdvancedADC();

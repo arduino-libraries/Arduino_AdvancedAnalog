@@ -6,18 +6,18 @@ struct dac_descr_t;
 
 class AdvancedDAC {
     private:
+        size_t n_channels;
         dac_descr_t *descr;
         std::array<PinName, AN_MAX_DAC_CHANNELS> dac_pins;
 
     public:
         template <typename ... T>
-        AdvancedDAC(pin_size_t p0, T ... args): descr(nullptr) {
+        AdvancedDAC(pin_size_t p0, T ... args): n_channels(0), descr(nullptr) {
             static_assert(sizeof ...(args) < AN_MAX_DAC_CHANNELS,
                     "A maximum of 1 channel is currently supported.");
 
-            size_t i=0;
             for (auto p : {p0, args...}) {
-                dac_pins[i++] = analogPinToPinName(p);
+                dac_pins[n_channels++] = analogPinToPinName(p);
             }
         }
         ~AdvancedDAC();

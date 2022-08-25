@@ -54,7 +54,7 @@ static adc_descr_t *adc_descr_get(ADC_TypeDef *adc) {
     return NULL;
 }
 
-static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t timer_trigger, auto adc_pins) {
+static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, auto adc_pins, uint32_t n_channels) {
     // Set ADC clock source.
     __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
 
@@ -75,11 +75,11 @@ static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t 
     adc->Init.LowPowerAutoWait         = DISABLE;
     adc->Init.ContinuousConvMode       = DISABLE;
     adc->Init.DiscontinuousConvMode    = DISABLE;
-    adc->Init.NbrOfConversion          = adc_pins.size();
+    adc->Init.NbrOfConversion          = n_channels;
     adc->Init.Overrun                  = ADC_OVR_DATA_OVERWRITTEN;
     adc->Init.LeftBitShift             = ADC_LEFTBITSHIFT_NONE;
     adc->Init.OversamplingMode         = DISABLE;
-    adc->Init.ExternalTrigConv         = timer_trigger;
+    adc->Init.ExternalTrigConv         = trigger;
     adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISING;
     adc->Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
 
@@ -92,7 +92,7 @@ static int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t 
     sConfig.SingleDiff   = ADC_SINGLE_ENDED;
     sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
 
-    for (size_t rank=0; rank<adc_pins.size(); rank++) {
+    for (size_t rank=0; rank<n_channels; rank++) {
         uint32_t function = pinmap_function(adc_pins[rank], PinMap_ADC);
         uint32_t channel = STM_PIN_CHANNEL(function);
         sConfig.Rank     = ADC_RANK_LUT[rank];
@@ -119,7 +119,6 @@ DMABuffer<Sample> &AdvancedADC::read() {
 }
 
 int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, user_callback_t callback) {
-    size_t n_channels = adc_pins.size();
     ADCName instance = (ADCName) pinmap_peripheral(adc_pins[0], PinMap_ADC);
 
     // Sanity checks.
@@ -135,13 +134,13 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // All channels must share the same instance; if not, bail out
-    for (auto &pin : adc_pins) {
-        auto _instance = pinmap_peripheral(pin, PinMap_ADC);
+    for (size_t i=0; i<n_channels; i++) {
+        auto _instance = pinmap_peripheral(adc_pins[i], PinMap_ADC);
         if (_instance != instance) {
             return 0;
         }
         // Configure GPIO as analog
-        pinmap_pinout(pin, PinMap_ADC);
+        pinmap_pinout(adc_pins[i], PinMap_ADC);
     }
 
     // Allocate DMA buffer pool.
@@ -157,7 +156,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     hal_dma_config(&descr->dma, descr->dma_irqn, DMA_PERIPH_TO_MEMORY);
 
     // Init and config ADC.
-    hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins);
+    hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins, n_channels);
 
     // Link DMA handle to ADC handle, and start the ADC.
     __HAL_LINKDMA(&descr->adc, DMA_Handle, descr->dma);

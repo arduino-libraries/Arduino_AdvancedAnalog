@@ -127,17 +127,15 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
 }
 
 int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers, user_callback_t callback) {
-    size_t n_channels = dac_pins.size();
-
     // Sanity checks.
     if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT)) {
         return 0;
     }
 
     // Configure DAC GPIO pins.
-    for (auto &pin : dac_pins) {
+    for (size_t i=0; i<n_channels; i++) {
         // Configure DAC GPIO pin.
-        pinmap_pinout(pin, PinMap_DAC);
+        pinmap_pinout(dac_pins[i], PinMap_DAC);
     }
 
     uint32_t function = pinmap_function(dac_pins[0], PinMap_DAC);
