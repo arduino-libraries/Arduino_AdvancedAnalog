@@ -14,17 +14,17 @@ int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
     uint32_t t_div = 64000; // TODO: This divider will only allow frequencies up to 64KHz
     uint32_t t_clk = hal_tim_freq(tim);
 
-    tim->Init.Period             = (t_div / t_freq) - 1;
-    tim->Init.Prescaler          = (t_clk / t_div ) - 1;
-    tim->Init.CounterMode        = TIM_COUNTERMODE_UP;
-    tim->Init.ClockDivision      = TIM_CLOCKDIVISION_DIV1;
-    tim->Init.RepetitionCounter  = 0;
-    tim->Init.AutoReloadPreload  = TIM_AUTORELOAD_PRELOAD_ENABLE;
+    tim->Init.Period                = (t_div / t_freq) - 1;
+    tim->Init.Prescaler             = (t_clk / t_div ) - 1;
+    tim->Init.CounterMode           = TIM_COUNTERMODE_UP;
+    tim->Init.ClockDivision         = TIM_CLOCKDIVISION_DIV1;
+    tim->Init.RepetitionCounter     = 0;
+    tim->Init.AutoReloadPreload     = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
     TIM_MasterConfigTypeDef sConfig = {0};
-    sConfig.MasterOutputTrigger  = TIM_TRGO_UPDATE;
-    sConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
-    sConfig.MasterSlaveMode      = TIM_MASTERSLAVEMODE_ENABLE;
+    sConfig.MasterOutputTrigger     = TIM_TRGO_UPDATE;
+    sConfig.MasterOutputTrigger2    = TIM_TRGO2_RESET;
+    sConfig.MasterSlaveMode         = TIM_MASTERSLAVEMODE_ENABLE;
 
     if (tim->Instance == TIM1) {
         __HAL_RCC_TIM1_CLK_ENABLE();
@@ -36,6 +36,8 @@ int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
         __HAL_RCC_TIM4_CLK_ENABLE();
     } else if (tim->Instance == TIM5) {
         __HAL_RCC_TIM5_CLK_ENABLE();
+    } else if (tim->Instance == TIM6) {
+        __HAL_RCC_TIM6_CLK_ENABLE();
     }
 
     __HAL_TIM_CLEAR_FLAG(tim, TIM_FLAG_UPDATE);
@@ -78,8 +80,7 @@ int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn, uint32_t direction) {
     return 0;
 }
 
-void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0, void *m1)
-{
+void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0, void *m1) {
     // NOTE: This is a workaround for the ADC/DAC HAL driver lacking a function to start DMA
     // in double/multi buffer mode. The HAL_x_DMA_Start function clears the double buffer bit,
     // so we disable the stream, re-set the DMB bit, and re-enable the stream. This should be
@@ -104,14 +105,12 @@ void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0, void *m1)
     __HAL_DMA_ENABLE(dma);
 }
 
-size_t hal_dma_get_ct(DMA_HandleTypeDef *dma)
-{
+size_t hal_dma_get_ct(DMA_HandleTypeDef *dma) {
     // Returns 0 if CT==0, and 1 if CT==1.
     return !!(((DMA_Stream_TypeDef *) dma->Instance)->CR & DMA_SxCR_CT);
 }
 
-void hal_dma_update_memory(DMA_HandleTypeDef *dma, void *addr)
-{
+void hal_dma_update_memory(DMA_HandleTypeDef *dma, void *addr) {
     // Update the next DMA target pointer.
     if (((DMA_Stream_TypeDef *) dma->Instance)->CR & DMA_SxCR_CT) {
         HAL_DMAEx_ChangeMemory(dma, (uint32_t) addr, MEMORY0);
