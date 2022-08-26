@@ -4,15 +4,15 @@ static uint32_t hal_tim_freq(TIM_HandleTypeDef *tim) {
     // NOTE: If a APB1/2 prescaler is set, respective timers clock should
     // be doubled, however, it seems the right timer clock is not doubled.
     if (((uint32_t) tim->Instance & (~0xFFFFUL)) ==  D2_APB1PERIPH_BASE) {
-        return HAL_RCC_GetPCLK1Freq() * ((RCC->D2CFGR & RCC_D2CFGR_D2PPRE1) ? 1 : 1);
+        return HAL_RCC_GetPCLK1Freq() * ((RCC->D2CFGR & RCC_D2CFGR_D2PPRE1) ? 2 : 1);
     } else {
-        return HAL_RCC_GetPCLK2Freq() * ((RCC->D2CFGR & RCC_D2CFGR_D2PPRE2) ? 1 : 1);
+        return HAL_RCC_GetPCLK2Freq() * ((RCC->D2CFGR & RCC_D2CFGR_D2PPRE2) ? 2 : 1);
     }
 }
 
 int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
-    uint32_t t_div = 64000; // TODO: This divider will only allow frequencies up to 64KHz
     uint32_t t_clk = hal_tim_freq(tim);
+    uint32_t t_div = ((t_clk / t_freq) > 0xFFFF) ? 64000 : (t_freq * 2);
 
     tim->Init.Period                = (t_div / t_freq) - 1;
     tim->Init.Prescaler             = (t_clk / t_div ) - 1;
@@ -40,14 +40,12 @@ int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
         __HAL_RCC_TIM6_CLK_ENABLE();
     }
 
-    __HAL_TIM_CLEAR_FLAG(tim, TIM_FLAG_UPDATE);
-
     // Init and config the timer.
+    __HAL_TIM_CLEAR_FLAG(tim, TIM_FLAG_UPDATE);
     if ((HAL_TIM_PWM_Init(tim) != HAL_OK)
     || (HAL_TIMEx_MasterConfigSynchronization(tim, &sConfig) != HAL_OK)) {
         return -1;
     }
-
     return 0;
 }
 
