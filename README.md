@@ -1,4 +1,4 @@
-# AdvancedAnalogRedux
+# AdvancedAnalogRedux 〰
 Advanced Analog Library
 
 ## Pending issues
