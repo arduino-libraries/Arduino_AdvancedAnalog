@@ -65,32 +65,6 @@ static void dac_descr_shutdown(dac_descr_t *descr) {
     }
 }
 
-static int hal_dac_config(DAC_HandleTypeDef *dac, uint32_t channel, uint32_t trigger) {
-    // DAC init
-    if (dac->Instance == NULL) {
-        // Enable DAC clock
-        __HAL_RCC_DAC12_CLK_ENABLE();
-
-        dac->Instance = DAC1;
-        if (HAL_DAC_DeInit(dac) != HAL_OK
-         || HAL_DAC_Init(dac) != HAL_OK) {
-            return -1;
-        }
-    }
-
-    DAC_ChannelConfTypeDef sConfig = {0};
-    sConfig.DAC_Trigger         = trigger;
-    sConfig.DAC_OutputBuffer    = DAC_OUTPUTBUFFER_DISABLE;
-    sConfig.DAC_UserTrimming    = DAC_TRIMMING_FACTORY;
-    sConfig.DAC_SampleAndHold   = DAC_SAMPLEANDHOLD_DISABLE;
-    sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
-    if (HAL_DAC_ConfigChannel(dac, &sConfig, channel) != HAL_OK) {
-        return -1;
-    }
-
-    return 0;
-}
-
 bool AdvancedDAC::available() {
     if (descr != nullptr) {
         return descr->pool->writable();
@@ -105,9 +79,6 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
     }
     return NULLBUF;
 }
-
-extern HAL_StatusTypeDef HAL_DAC_Start_DMA_MB(DAC_HandleTypeDef *hdac, uint32_t Channel,
-        uint32_t *pData, uint32_t *pData2, uint32_t Length, uint32_t Alignment);
 
 void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
     // Make sure any cached data is flushed.
@@ -173,6 +144,12 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     return 1;
 }
 
+int AdvancedDAC::stop()
+{
+    dac_descr_shutdown(descr);
+    return 1;
+}
+
 AdvancedDAC::~AdvancedDAC()
 {
     stop();
@@ -182,12 +159,6 @@ AdvancedDAC::~AdvancedDAC()
         }
         descr->pool = nullptr;
     }
-}
-
-int AdvancedDAC::stop()
-{
-    dac_descr_shutdown(descr);
-    return 1;
 }
 
 extern "C" {

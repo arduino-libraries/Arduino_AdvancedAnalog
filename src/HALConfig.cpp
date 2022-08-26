@@ -116,3 +116,82 @@ void hal_dma_update_memory(DMA_HandleTypeDef *dma, void *addr) {
         HAL_DMAEx_ChangeMemory(dma, (uint32_t) addr, MEMORY1);
     }
 }
+
+int hal_dac_config(DAC_HandleTypeDef *dac, uint32_t channel, uint32_t trigger) {
+    // DAC init
+    if (dac->Instance == NULL) {
+        // Enable DAC clock
+        __HAL_RCC_DAC12_CLK_ENABLE();
+
+        dac->Instance = DAC1;
+        if (HAL_DAC_DeInit(dac) != HAL_OK
+         || HAL_DAC_Init(dac) != HAL_OK) {
+            return -1;
+        }
+    }
+
+    DAC_ChannelConfTypeDef sConfig = {0};
+    sConfig.DAC_Trigger         = trigger;
+    sConfig.DAC_OutputBuffer    = DAC_OUTPUTBUFFER_DISABLE;
+    sConfig.DAC_UserTrimming    = DAC_TRIMMING_FACTORY;
+    sConfig.DAC_SampleAndHold   = DAC_SAMPLEANDHOLD_DISABLE;
+    sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
+    if (HAL_DAC_ConfigChannel(dac, &sConfig, channel) != HAL_OK) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static uint32_t ADC_RANK_LUT[] = {
+    ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
+};
+
+int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, auto adc_pins, uint32_t n_channels) {
+    // Set ADC clock source.
+    __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
+
+    // Enable ADC clock
+    if (adc->Instance == ADC1) {
+        __HAL_RCC_ADC12_CLK_ENABLE();
+    } else if (adc->Instance == ADC2) {
+        __HAL_RCC_ADC12_CLK_ENABLE();
+    } else if (adc->Instance == ADC3) {
+        __HAL_RCC_ADC3_CLK_ENABLE();
+    }
+
+    // ADC init
+    adc->Init.Resolution               = resolution;
+    adc->Init.ClockPrescaler           = ADC_CLOCK_ASYNC_DIV1;
+    adc->Init.ScanConvMode             = ADC_SCAN_ENABLE;
+    adc->Init.EOCSelection             = ADC_EOC_SEQ_CONV;
+    adc->Init.LowPowerAutoWait         = DISABLE;
+    adc->Init.ContinuousConvMode       = DISABLE;
+    adc->Init.DiscontinuousConvMode    = DISABLE;
+    adc->Init.NbrOfConversion          = n_channels;
+    adc->Init.Overrun                  = ADC_OVR_DATA_OVERWRITTEN;
+    adc->Init.LeftBitShift             = ADC_LEFTBITSHIFT_NONE;
+    adc->Init.OversamplingMode         = DISABLE;
+    adc->Init.ExternalTrigConv         = trigger;
+    adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISING;
+    adc->Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
+
+    HAL_ADC_Init(adc);
+    HAL_ADCEx_Calibration_Start(adc, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+
+    ADC_ChannelConfTypeDef sConfig = {0};
+    sConfig.Offset       = 0;
+    sConfig.OffsetNumber = ADC_OFFSET_NONE;
+    sConfig.SingleDiff   = ADC_SINGLE_ENDED;
+    sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
+
+    for (size_t rank=0; rank<n_channels; rank++) {
+        uint32_t function = pinmap_function(adc_pins[rank], PinMap_ADC);
+        uint32_t channel = STM_PIN_CHANNEL(function);
+        sConfig.Rank     = ADC_RANK_LUT[rank];
+        sConfig.Channel  = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
+        HAL_ADC_ConfigChannel(adc, &sConfig);
+    }
+
+    return 0;
+}
