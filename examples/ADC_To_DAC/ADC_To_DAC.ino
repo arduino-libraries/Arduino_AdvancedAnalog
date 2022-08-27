@@ -15,7 +15,9 @@ void setup() {
         while (1);
     }
 
-    if (!dac1.begin(AN_RESOLUTION_12, 16000, 32, 64)) {
+    // Note there's no need to allocate a pool for DAC, since all buffers
+    // are allocated from the ADC pool.
+    if (!dac1.begin(AN_RESOLUTION_12, 16000)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }

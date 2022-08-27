@@ -136,16 +136,15 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
     public:
         DMABufferPool(size_t n_samples, size_t n_channels, size_t n_buffers):
             buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
-
             // Round up to next multiple of alignment.
-            size_t bufsize = AlignedAlloc<A>::round(n_samples * n_channels *sizeof(T));
+            size_t bufsize = AlignedAlloc<A>::round(n_samples * n_channels * sizeof(T));
+            if (bufsize) {
+                // Allocate non-aligned memory for the DMA buffers objects.
+                buffers.reset(new DMABuffer<T>[n_buffers]);
 
-            // Allocate non-aligned memory for the DMA buffers objects.
-            buffers.reset(new DMABuffer<T>[n_buffers]);
-
-            // Allocate aligned memory pool for DMA buffers pointers.
-            pool.reset((uint8_t *) AlignedAlloc<A>::malloc(n_buffers * bufsize));
-
+                // Allocate aligned memory pool for DMA buffers pointers.
+                pool.reset((uint8_t *) AlignedAlloc<A>::malloc(n_buffers * bufsize));
+            }
             if (buffers && pool) {
                 // Init DMA buffers using aligned pointers to dma buffers memory.
                 for (size_t i=0; i<n_buffers; i++) {
