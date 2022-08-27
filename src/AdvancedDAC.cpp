@@ -52,10 +52,19 @@ static dac_descr_t *dac_descr_get(uint32_t channel) {
     return NULL;
 }
 
-static void dac_descr_shutdown(dac_descr_t *descr) {
+static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
     if (descr) {
         HAL_TIM_Base_Stop(&descr->tim);
         HAL_DAC_Stop_DMA(descr->dac, descr->channel);
+
+        if (dealloc_pool) {
+            if (descr->pool) {
+                delete descr->pool;
+            }
+            descr->pool = nullptr;
+            descr->callback = nullptr;
+        }
+
         for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
             if (descr->dmabuf[i]) {
                 descr->dmabuf[i]->release();
@@ -147,19 +156,13 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
 
 int AdvancedDAC::stop()
 {
-    dac_descr_shutdown(descr);
+    dac_descr_deinit(descr, false);
     return 1;
 }
 
 AdvancedDAC::~AdvancedDAC()
 {
-    stop();
-    if (descr) {
-        if (descr->pool) {
-            delete descr->pool;
-        }
-        descr->pool = nullptr;
-    }
+    dac_descr_deinit(descr, true);
 }
 
 extern "C" {
@@ -175,7 +178,7 @@ void DAC_DMAConvCplt(DMA_HandleTypeDef *dma, uint32_t channel) {
         descr->dmabuf[ct] = descr->pool->dequeue();
         hal_dma_update_memory(dma, descr->dmabuf[ct]->data());
     } else {
-        dac_descr_shutdown(descr);
+        dac_descr_deinit(descr, false);
     }
 }
 

@@ -50,6 +50,28 @@ static adc_descr_t *adc_descr_get(ADC_TypeDef *adc) {
     return NULL;
 }
 
+static void dac_descr_deinit(adc_descr_t *descr, bool dealloc_pool) {
+    if (descr) {
+        HAL_TIM_Base_Stop(&descr->tim);
+        HAL_ADC_Stop_DMA(&descr->adc);
+
+        if (dealloc_pool) {
+            if (descr->pool) {
+                delete descr->pool;
+            }
+            descr->pool = nullptr;
+            descr->callback = nullptr;
+        }
+
+        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
+            if (descr->dmabuf[i]) {
+                descr->dmabuf[i]->release();
+                descr->dmabuf[i] = nullptr;
+            }
+        }
+    }
+}
+
 bool AdvancedADC::available() {
     if (descr != nullptr) {
         return descr->pool->readable();
@@ -120,29 +142,13 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
 
 int AdvancedADC::stop()
 {
-    if (descr) {
-        HAL_TIM_Base_Stop(&descr->tim);
-        HAL_ADC_Stop_DMA(&descr->adc);
-    }
+    dac_descr_deinit(descr, true);
     return 1;
 }
 
 AdvancedADC::~AdvancedADC()
 {
-    stop();
-    if (descr) {
-        if (descr->pool) {
-            delete descr->pool;
-        }
-        descr->pool = nullptr;
-        descr->callback = nullptr;
-        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
-            if (descr->dmabuf[i]) {
-                descr->dmabuf[i]->release();
-                descr->dmabuf[i] = nullptr;
-            }
-        }
-    }
+    dac_descr_deinit(descr, true);
 }
 
 extern "C" {
