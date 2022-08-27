@@ -8,7 +8,7 @@ class AdvancedDAC {
     private:
         size_t n_channels;
         dac_descr_t *descr;
-        std::array<PinName, AN_MAX_DAC_CHANNELS> dac_pins;
+        PinName dac_pins[AN_MAX_DAC_CHANNELS];
 
     public:
         template <typename ... T>

@@ -8,7 +8,7 @@ class AdvancedADC {
     private:
         size_t n_channels;
         adc_descr_t *descr;
-        std::array<PinName, AN_MAX_ADC_CHANNELS> adc_pins;
+        PinName adc_pins[AN_MAX_ADC_CHANNELS];
 
     public:
         template <typename ... T>

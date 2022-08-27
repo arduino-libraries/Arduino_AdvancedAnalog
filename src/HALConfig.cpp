@@ -147,7 +147,7 @@ static uint32_t ADC_RANK_LUT[] = {
     ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
 };
 
-int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, auto adc_pins, uint32_t n_channels) {
+int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels) {
     // Set ADC clock source.
     __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
 
