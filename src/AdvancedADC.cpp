@@ -2,21 +2,24 @@
 #include "HALConfig.h"
 #include "AdvancedADC.h"
 
+#define ADC_NP  ((ADCName) NC)
+
 struct adc_descr_t {
     ADC_HandleTypeDef adc;
     DMA_HandleTypeDef dma;
     IRQn_Type dma_irqn;
     TIM_HandleTypeDef tim;
     uint32_t  tim_trig;
+    uint32_t  pin_alt;
     user_callback_t callback;
     DMABufferPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
 
 static adc_descr_t adc_descr_all[3] = {
-    {{ADC1}, {DMA1_Stream1, {DMA_REQUEST_ADC1}}, DMA1_Stream1_IRQn, {TIM1}, ADC_EXTERNALTRIG_T1_TRGO},
-    {{ADC2}, {DMA1_Stream2, {DMA_REQUEST_ADC2}}, DMA1_Stream2_IRQn, {TIM2}, ADC_EXTERNALTRIG_T2_TRGO},
-    {{ADC3}, {DMA1_Stream3, {DMA_REQUEST_ADC3}}, DMA1_Stream3_IRQn, {TIM3}, ADC_EXTERNALTRIG_T3_TRGO},
+    {{ADC1}, {DMA1_Stream1, {DMA_REQUEST_ADC1}}, DMA1_Stream1_IRQn, {TIM1}, ADC_EXTERNALTRIG_T1_TRGO, 0},
+    {{ADC2}, {DMA1_Stream2, {DMA_REQUEST_ADC2}}, DMA1_Stream2_IRQn, {TIM2}, ADC_EXTERNALTRIG_T2_TRGO, ALT0},
+    {{ADC3}, {DMA1_Stream3, {DMA_REQUEST_ADC3}}, DMA1_Stream3_IRQn, {TIM3}, ADC_EXTERNALTRIG_T3_TRGO, ALT1},
 };
 
 static uint32_t ADC_RES_LUT[] = {
@@ -88,27 +91,37 @@ DMABuffer<Sample> &AdvancedADC::read() {
 }
 
 int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, user_callback_t callback) {
-    ADCName instance = (ADCName) pinmap_peripheral(adc_pins[0], PinMap_ADC);
+    ADCName instance = ADC_NP;
 
     // Sanity checks.
     if (resolution >= AN_ARRAY_SIZE(ADC_RES_LUT)) {
         return 0;
     }
 
-    // Check if this ADC/descriptor is already in use.
-    descr = adc_descr_get((ADC_TypeDef *) instance);
-    if (descr->pool != nullptr) {
+    // Find an ADC that can be used with these set of pins/channels.
+    for (size_t i=0; instance == ADC_NP && i<AN_ARRAY_SIZE(adc_descr_all); i++) {
+        descr = &adc_descr_all[i];
+        if (descr->pool == nullptr) {
+            // Check if the first channel is connected to this ADC.
+            PinName pin = (PinName) (adc_pins[0] | descr->pin_alt);
+            instance = (ADCName) pinmap_peripheral(pin, PinMap_ADC);
+        }
+    }
+
+    if (instance == ADC_NP) {
+        // Couldn't find a free ADC/descriptor.
         descr = nullptr;
         return 0;
     }
 
-    // All channels must share the same instance; if not, bail out
+    // Configure ADC pins.
     for (size_t i=0; i<n_channels; i++) {
-        auto _instance = pinmap_peripheral(adc_pins[i], PinMap_ADC);
-        if (_instance != instance) {
+        // Set the alternate pin names for this ADC instance.
+        adc_pins[i] = (PinName) (adc_pins[i] | descr->pin_alt);
+        // All channels must share the same instance; if not, bail out
+        if (instance != pinmap_peripheral(adc_pins[i], PinMap_ADC)) {
             return 0;
         }
-        // Configure GPIO as analog
         pinmap_pinout(adc_pins[i], PinMap_ADC);
     }
 
