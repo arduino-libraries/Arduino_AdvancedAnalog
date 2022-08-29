@@ -128,8 +128,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
 
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
     private:
-        LLQueue<DMABuffer<T>*> wr_queue;
-        LLQueue<DMABuffer<T>*> rd_queue;
+        Queue<DMABuffer<T>*> wr_queue;
+        Queue<DMABuffer<T>*> rd_queue;
         std::unique_ptr<DMABuffer<T>[]> buffers;
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
