@@ -154,15 +154,11 @@ AdvancedADC::~AdvancedADC()
 extern "C" {
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     adc_descr_t *descr = adc_descr_get(adc->Instance);
-
     // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
     size_t ct = ! hal_dma_get_ct(&descr->dma);
 
     // Timestamp the buffer. TODO: Should move to timer IRQ.
     descr->dmabuf[ct]->timestamp(HAL_GetTick());
-
-    // Currently, all buffers are interleaved.
-    descr->dmabuf[ct]->setflags(DMA_BUFFER_INTRLVD);
 
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
@@ -173,6 +169,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
 
         // Allocate a new free buffer.
         descr->dmabuf[ct] = descr->pool->allocate();
+
+        // Currently, all multi-channel buffers are interleaved.
+        if (descr->dmabuf[ct]->channels() > 1) {
+            descr->dmabuf[ct]->setflags(DMA_BUFFER_INTRLVD);
+        }
     } else {
         descr->dmabuf[ct]->setflags(DMA_BUFFER_DISCONT);
     }
