@@ -3,14 +3,14 @@
 #include "AdvancedADC.h"
 #include "AdvancedDAC.h"
 
-AdvancedADC adc0(A0, A1);
+AdvancedADC adc1(A0, A1);
 AdvancedDAC dac1(A12);
 
 void setup() {
     Serial.begin(9600);
 
     // Resolution, sample rate, number of samples per channel, queue depth.
-    if (!adc0.begin(AN_RESOLUTION_12, 8000, 32, 64)) {
+    if (!adc1.begin(AN_RESOLUTION_12, 8000, 32, 64)) {
         Serial.println("Failed to start analog acquisition!");
         while (1);
     }
@@ -24,7 +24,7 @@ void setup() {
 }
 
 void loop() {
-    if (adc0.available()) {
-        dac1.write(adc0.read());
+    if (adc1.available()) {
+        dac1.write(adc1.read());
     }
 }
