@@ -19,8 +19,10 @@ struct dac_descr_t {
 static DAC_HandleTypeDef dac = {0};
 
 static dac_descr_t dac_descr_all[] = {
-    {&dac, DAC_CHANNEL_1, {DMA1_Stream4, {DMA_REQUEST_DAC1_CH1}}, DMA1_Stream4_IRQn, {TIM4}, DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R},
-    {&dac, DAC_CHANNEL_2, {DMA1_Stream5, {DMA_REQUEST_DAC1_CH2}}, DMA1_Stream5_IRQn, {TIM5}, DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R},
+    {&dac, DAC_CHANNEL_1, {DMA1_Stream4, {DMA_REQUEST_DAC1_CH1}}, DMA1_Stream4_IRQn,
+        {TIM4}, DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R, nullptr, nullptr, {nullptr, nullptr}},
+    {&dac, DAC_CHANNEL_2, {DMA1_Stream5, {DMA_REQUEST_DAC1_CH2}}, DMA1_Stream5_IRQn,
+        {TIM5}, DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R, nullptr, nullptr, {nullptr, nullptr}},
 };
 
 static uint32_t DAC_RES_LUT[] = {
