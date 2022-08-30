@@ -84,6 +84,9 @@ bool AdvancedDAC::available() {
 DMABuffer<Sample> &AdvancedDAC::dequeue() {
     static DMABuffer<Sample> NULLBUF;
     if (descr != nullptr) {
+        while (!available()) {
+            __WFI();
+        }
         return *descr->pool->allocate();
     }
     return NULLBUF;

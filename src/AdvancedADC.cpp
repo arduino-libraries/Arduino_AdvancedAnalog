@@ -86,6 +86,9 @@ bool AdvancedADC::available() {
 DMABuffer<Sample> &AdvancedADC::read() {
     static DMABuffer<Sample> NULLBUF;
     if (descr != nullptr) {
+        while (!available()) {
+            __WFI();
+        }
         return *descr->pool->dequeue();
     }
     return NULLBUF;
