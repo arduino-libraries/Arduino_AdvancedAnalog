@@ -23,6 +23,6 @@ class AdvancedADC {
         ~AdvancedADC();
         bool available();
         SampleBuffer read();
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, user_callback_t callback=nullptr);
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
         int stop();
 };

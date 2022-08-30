@@ -10,7 +10,6 @@ struct dac_descr_t {
     TIM_HandleTypeDef tim;
     uint32_t tim_trig;
     uint32_t resolution;
-    user_callback_t callback;
     DMABufferPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
@@ -20,9 +19,9 @@ static DAC_HandleTypeDef dac = {0};
 
 static dac_descr_t dac_descr_all[] = {
     {&dac, DAC_CHANNEL_1, {DMA1_Stream4, {DMA_REQUEST_DAC1_CH1}}, DMA1_Stream4_IRQn,
-        {TIM4}, DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R, nullptr, nullptr, {nullptr, nullptr}},
+        {TIM4}, DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R, nullptr, {nullptr, nullptr}},
     {&dac, DAC_CHANNEL_2, {DMA1_Stream5, {DMA_REQUEST_DAC1_CH2}}, DMA1_Stream5_IRQn,
-        {TIM5}, DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R, nullptr, nullptr, {nullptr, nullptr}},
+        {TIM5}, DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R, nullptr, {nullptr, nullptr}},
 };
 
 static uint32_t DAC_RES_LUT[] = {
@@ -64,7 +63,6 @@ static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
                 delete descr->pool;
             }
             descr->pool = nullptr;
-            descr->callback = nullptr;
         }
 
         for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
@@ -112,7 +110,7 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
     }
 }
 
-int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers, user_callback_t callback) {
+int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers) {
     // Sanity checks.
     if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT)) {
         return 0;
@@ -135,7 +133,6 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     if (descr->pool == nullptr) {
         return 0;
     }
-    descr->callback = callback;
     descr->resolution = DAC_RES_LUT[resolution];
 
     // Init and config DMA.

@@ -11,18 +11,17 @@ struct adc_descr_t {
     TIM_HandleTypeDef tim;
     uint32_t  tim_trig;
     uint32_t  pin_alt;
-    user_callback_t callback;
     DMABufferPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
 
 static adc_descr_t adc_descr_all[3] = {
     {{ADC1}, {DMA1_Stream1, {DMA_REQUEST_ADC1}}, DMA1_Stream1_IRQn, {TIM1}, ADC_EXTERNALTRIG_T1_TRGO,
-        0, nullptr, nullptr, {nullptr, nullptr}},
+        0, nullptr, {nullptr, nullptr}},
     {{ADC2}, {DMA1_Stream2, {DMA_REQUEST_ADC2}}, DMA1_Stream2_IRQn, {TIM2}, ADC_EXTERNALTRIG_T2_TRGO,
-        ALT0, nullptr, nullptr, {nullptr, nullptr}},
+        ALT0, nullptr, {nullptr, nullptr}},
     {{ADC3}, {DMA1_Stream3, {DMA_REQUEST_ADC3}}, DMA1_Stream3_IRQn, {TIM3}, ADC_EXTERNALTRIG_T3_TRGO,
-        ALT1, nullptr, nullptr, {nullptr, nullptr}},
+        ALT1, nullptr, {nullptr, nullptr}},
 };
 
 static uint32_t ADC_RES_LUT[] = {
@@ -66,7 +65,6 @@ static void dac_descr_deinit(adc_descr_t *descr, bool dealloc_pool) {
                 delete descr->pool;
             }
             descr->pool = nullptr;
-            descr->callback = nullptr;
         }
 
         for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
@@ -93,7 +91,7 @@ DMABuffer<Sample> &AdvancedADC::read() {
     return NULLBUF;
 }
 
-int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, user_callback_t callback) {
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers) {
     ADCName instance = ADC_NP;
 
     // Sanity checks.
@@ -133,7 +131,6 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     if (descr->pool == nullptr) {
         return 0;
     }
-    descr->callback = callback;
     descr->dmabuf[0] = descr->pool->allocate();
     descr->dmabuf[1] = descr->pool->allocate();
 

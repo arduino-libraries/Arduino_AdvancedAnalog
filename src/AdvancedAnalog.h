@@ -14,7 +14,6 @@ enum {
 
 typedef uint16_t                Sample;     // Sample type used for ADC/DAC.
 typedef DMABuffer<Sample>       &SampleBuffer;
-typedef mbed::Callback<void()>  user_callback_t;
 
 #define AN_MAX_ADC_CHANNELS     (5)
 #define AN_MAX_DAC_CHANNELS     (1)

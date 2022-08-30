@@ -25,6 +25,6 @@ class AdvancedDAC {
         bool available();
         SampleBuffer dequeue();
         void write(SampleBuffer dmabuf);
-        int begin(uint32_t resolution, uint32_t frequency, size_t n_samples=0, size_t n_buffers=0, user_callback_t cb=nullptr);
+        int begin(uint32_t resolution, uint32_t frequency, size_t n_samples=0, size_t n_buffers=0);
         int stop();
 };
