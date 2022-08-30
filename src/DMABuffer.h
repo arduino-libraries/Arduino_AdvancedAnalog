@@ -124,6 +124,10 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
             assert(ptr && i < size());
             return ptr[i];
         }
+
+        operator bool() const {
+            return (ptr != nullptr);
+        }
 };
 
 template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
