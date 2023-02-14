@@ -1,6 +1,7 @@
 AdvancedAnalogRedux 〰
 ======================
 [![Spell Check status](https://github.com/bcmi-labs/AdvancedAnalogRedux/actions/workflows/spell-check-task.yml/badge.svg)](https://github.com/bcmi-labs/AdvancedAnalogRedux/actions/workflows/spell-check-task.yml)
+[![Sync Labels status](https://github.com/bcmi-labs/AdvancedAnalogRedux/actions/workflows/sync-labels.yml/badge.svg)](https://github.com/bcmi-labs/AdvancedAnalogRedux/actions/workflows/sync-labels.yml)
 
 Advanced Analog Library
 
