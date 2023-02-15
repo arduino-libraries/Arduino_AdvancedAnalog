@@ -60,18 +60,18 @@ static void dac_descr_deinit(adc_descr_t *descr, bool dealloc_pool) {
         HAL_TIM_Base_Stop(&descr->tim);
         HAL_ADC_Stop_DMA(&descr->adc);
 
-        if (dealloc_pool) {
-            if (descr->pool) {
-                delete descr->pool;
-            }
-            descr->pool = nullptr;
-        }
-
         for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
             if (descr->dmabuf[i]) {
                 descr->dmabuf[i]->release();
                 descr->dmabuf[i] = nullptr;
             }
+        }
+
+        if (dealloc_pool) {
+            if (descr->pool) {
+                delete descr->pool;
+            }
+            descr->pool = nullptr;
         }
     }
 }
