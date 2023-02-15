@@ -58,6 +58,13 @@ static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
         HAL_TIM_Base_Stop(&descr->tim);
         HAL_DAC_Stop_DMA(descr->dac, descr->channel);
 
+        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
+            if (descr->dmabuf[i]) {
+                descr->dmabuf[i]->release();
+                descr->dmabuf[i] = nullptr;
+            }
+        }
+
         if (dealloc_pool) {
             if (descr->pool) {
                 delete descr->pool;
@@ -65,12 +72,6 @@ static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
             descr->pool = nullptr;
         }
 
-        for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
-            if (descr->dmabuf[i]) {
-                descr->dmabuf[i]->release();
-                descr->dmabuf[i] = nullptr;
-            }
-        }
     }
 }
 
@@ -158,7 +159,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
 
 int AdvancedDAC::stop()
 {
-    dac_descr_deinit(descr, false);
+    dac_descr_deinit(descr, true);
     return 1;
 }
 
