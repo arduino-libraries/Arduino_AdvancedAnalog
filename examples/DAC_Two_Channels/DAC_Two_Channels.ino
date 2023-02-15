@@ -1,5 +1,5 @@
 // This example outputs an 8KHz square wave on A12/DAC0 and 16KHz square wave on ADC13/DAC1.
-#include "AdvancedDAC.h"
+#include <Arduino_AdvancedAnalog.h>
 
 AdvancedDAC dac1(A12);
 AdvancedDAC dac2(A13);

@@ -1,5 +1,5 @@
 // This example shows how to use 2 ADC simultaneously.
-#include "AdvancedADC.h"
+#include <Arduino_AdvancedAnalog.h>
 
 AdvancedADC adc1(A0);
 AdvancedADC adc2(A1);
