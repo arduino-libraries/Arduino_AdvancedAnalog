@@ -1,0 +1,51 @@
+#######################################
+# Syntax Coloring Map for Arduino_AdvancedAnalog
+#######################################
+
+#######################################
+# Class (KEYWORD1)
+#######################################
+
+AdvancedADC	KEYWORD1
+AdvancedDAC	KEYWORD1
+Sample	KEYWORD1
+SampleBuffer	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+available	KEYWORD2
+read	KEYWORD2
+begin	KEYWORD2
+stop	KEYWORD2
+dequeue	KEYWORD2
+
+data	KEYWORD2
+size	KEYWORD2
+bytes	KEYWORD2
+flush	KEYWORD2
+invalidate	KEYWORD2
+timestamp	KEYWORD2
+channels	KEYWORD2
+release	KEYWORD2
+setflags	KEYWORD2
+getflags	KEYWORD2
+clrflags	KEYWORD2
+
+writable	KEYWORD2
+readable	KEYWORD2
+allocate	KEYWORD2
+release	KEYWORD2
+enqueue	KEYWORD2
+dequeue	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+AN_RESOLUTION_8	LITERAL1
+AN_RESOLUTION_10	LITERAL1
+AN_RESOLUTION_12	LITERAL1
+AN_RESOLUTION_14	LITERAL1
+AN_RESOLUTION_16	LITERAL1
