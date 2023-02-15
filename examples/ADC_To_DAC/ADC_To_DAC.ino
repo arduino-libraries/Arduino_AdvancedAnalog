@@ -1,7 +1,7 @@
 // This example outputs an 8KHz square wave on DAC1.
 // Connect ADC channel A0 to VDD and channel A1 to GND.
-#include "AdvancedADC.h"
-#include "AdvancedDAC.h"
+
+#include <Arduino_AdvancedAnalog.h>
 
 AdvancedADC adc1(A0, A1);
 AdvancedDAC dac1(A12);

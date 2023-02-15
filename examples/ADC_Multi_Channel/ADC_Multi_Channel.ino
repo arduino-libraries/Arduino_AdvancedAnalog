@@ -1,4 +1,4 @@
-#include "AdvancedADC.h"
+#include <Arduino_AdvancedAnalog.h>
 
 AdvancedADC adc(A0, A1);
 uint64_t last_millis = 0;

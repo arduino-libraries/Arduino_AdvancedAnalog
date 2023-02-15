@@ -1,5 +1,6 @@
 // This example outputs a 32KHz sine wave on A12/DAC1.
-#include "AdvancedDAC.h"
+#include <Arduino_AdvancedAnalog.h>
+
 AdvancedDAC dac1(A12);
 
 uint16_t lut[] = {
