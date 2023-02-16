@@ -1,6 +1,6 @@
 // This example generates different waveforms based on user input on A12/DAC1.
 
-#include "AdvancedDAC.h"
+#include <Arduino_AdvancedAnalog.h>
 
 #define N_SAMPLES           (256)
 #define DEFAULT_FREQUENCY   (16000)
