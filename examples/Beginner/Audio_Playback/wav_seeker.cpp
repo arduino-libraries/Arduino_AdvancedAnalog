@@ -159,7 +159,7 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
             slice_value/=wav_format.num_channels;
             
             switch (wav_format.sig_bps) {
-                          // Working for 8 bit for 12 bit output - acceleartes in the end
+                          // Working for 8 bit for 12 bit output - accelerates in the end
               case 8:     slice_value<<=4;
                           break;
                           // WORKING 12 BIT - SCALING DOWN FROM 16 BIT TO 12 BIT (Applied from 16-Bit wav sample files )
