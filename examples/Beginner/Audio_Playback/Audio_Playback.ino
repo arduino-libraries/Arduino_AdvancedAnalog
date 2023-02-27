@@ -53,6 +53,13 @@ void setup()
  
   Serial.println("Cleaning up ...");
   fclose(f);
+  int const rc_umount = usb.unmount();
+  if (rc_umount < 0)
+  {
+    Serial.print("Error unmounting USB drive: ");
+    Serial.println(rc_umount);
+    return;
+  }
 }
 
 void loop() {}
