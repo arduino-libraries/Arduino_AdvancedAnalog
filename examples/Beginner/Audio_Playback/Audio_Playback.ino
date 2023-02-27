@@ -9,8 +9,8 @@
 #include <USBHostMbed5.h>
 #include <FATFileSystem.h>
 
-// AdvancedDAC library is included inside wav_seeker library
 #include "wav_seeker.h"
+
 AdvancedDAC dac1(A12);
 
 USBHostMSD msd;
@@ -41,7 +41,7 @@ void setup()
   Serial.println("Opening audio file ...");
   
   // 16-bit PCM Mono 16kHz realigned noise reduction
-  FILE * f = fopen("/USB_DRIVE/AUDIO_SAMPLE.wav", "r+");
+  FILE * f = fopen("/USB_DRIVE/AUDIO_SAMPLE.wav", "r");
   if (f == nullptr)
   {
     Serial.print("Error opening audio file: ");
