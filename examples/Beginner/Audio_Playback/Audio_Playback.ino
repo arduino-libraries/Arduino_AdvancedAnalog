@@ -1,6 +1,7 @@
 /*
  * GIGA R1 - Audio Playback
  * Simple wav format audio playback via 12-Bit DAC output by reading from a USB drive.
+ * In order for this sketch to work you need to rename 'USB_DRIVE_NAME' to the name of your USB stick drive.
 */
 
 #include <USBHostMbed5.h>
@@ -14,55 +15,44 @@ AdvancedDAC dac1(A12);
 USBHostMSD msd;
 mbed::FATFileSystem usb("USB_DRIVE_NAME");
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   while (!Serial);
 
   pinMode(PA_15, OUTPUT);
   digitalWrite(PA_15, HIGH);
 
-  delay(2500);
-  Serial.println("Starting USB File Read example...");
+  Serial.println("Please connect a USB stick to the GIGA's USB port ...");
 
-  while (!msd.connect()) {
+  while (!msd.connect())
     delay(1000);
-  }
 
   Serial.println("Mounting USB device...");
-  int err =  usb.mount(&msd);
-  if (err) {
+  int const rc_mount =  usb.mount(&msd);
+  if (rc_mount)
+  {
     Serial.print("Error mounting USB device ");
-    Serial.println(err);
-    while (1);
+    Serial.println(rc_mount);
+    return;
   }
 
-  // Read
-  Serial.print("read done ");
-  mbed::fs_file_t file;
-  struct dirent *ent;
-  int dirIndex = 0;
-  int res = 0;
-  Serial.println("Open file..");
+  Serial.println("Opening audio file..");
   
   // 16-bit PCM Mono 16kHz realigned noise reduction
-  FILE *f = fopen("/USB_DRIVE_NAME/AUDIO_SAMPLE.wav", "r+");
+  FILE * f = fopen("/USB_DRIVE_NAME/AUDIO_SAMPLE.wav", "r+");
+  if (f == nullptr)
+  {
+    Serial.print("Error opening audio file: ");
+    Serial.println(strerror(errno));
+    return;
+  }
 
   // Crucial (from mBed)
   wav_play_rl(f, dac1, false);
  
-  // Close the file 
-  Serial.println("File closing");
-  fflush(stdout);
-  err = fclose(f);
-  if (err < 0) {
-    Serial.print("fclose error: ");
-    Serial.print(strerror(errno));
-    Serial.print(" (");
-    Serial.print(-errno);
-    Serial.print(")");
-  } else {
-    Serial.println("File closed!");
-  } 
+  // Cleanup.
+  fclose(f);
 }
 
 void loop() {}
