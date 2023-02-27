@@ -28,7 +28,7 @@ void setup()
   while (!msd.connect())
     delay(1000);
 
-  Serial.println("Mounting USB device...");
+  Serial.println("Mounting USB device ...");
   int const rc_mount =  usb.mount(&msd);
   if (rc_mount)
   {
@@ -37,7 +37,7 @@ void setup()
     return;
   }
 
-  Serial.println("Opening audio file..");
+  Serial.println("Opening audio file ...");
   
   // 16-bit PCM Mono 16kHz realigned noise reduction
   FILE * f = fopen("/USB_DRIVE_NAME/AUDIO_SAMPLE.wav", "r+");
@@ -48,10 +48,10 @@ void setup()
     return;
   }
 
-  // Crucial (from mBed)
+  Serial.println("Playing audio file ...");
   wav_play_rl(f, dac1, false);
  
-  // Cleanup.
+  Serial.println("Cleaning up ...");
   fclose(f);
 }
 
