@@ -21,6 +21,9 @@
 #include "DMABuffer.h"
 #include "AdvancedAnalog.h"
 
+#ifndef ARDUINO_ADVANCED_DAC_H_
+#define ARDUINO_ADVANCED_DAC_H_
+
 struct dac_descr_t;
 
 class AdvancedDAC {
@@ -47,3 +50,5 @@ class AdvancedDAC {
         int begin(uint32_t resolution, uint32_t frequency, size_t n_samples=0, size_t n_buffers=0);
         int stop();
 };
+
+#endif /* ARDUINO_ADVANCED_DAC_H_ */
