@@ -1,7 +1,7 @@
 /*
  * GIGA R1 - Audio Playback
  * Simple wav format audio playback via 12-Bit DAC output by reading from a USB drive.
- * In order for this sketch to work you need to rename 'USB_DRIVE_NAME' to the name of your USB stick drive.
+ * In order for this sketch to work you need to rename 'USB_DRIVE' to the name of your USB stick drive.
 */
 
 #include <USBHostMbed5.h>
@@ -13,7 +13,7 @@
 AdvancedDAC dac1(A12);
 
 USBHostMSD msd;
-mbed::FATFileSystem usb("USB_DRIVE_NAME");
+mbed::FATFileSystem usb("USB_DRIVE");
 
 void setup()
 {
@@ -29,7 +29,7 @@ void setup()
     delay(1000);
 
   Serial.println("Mounting USB device ...");
-  int const rc_mount =  usb.mount(&msd);
+  int const rc_mount = usb.mount(&msd);
   if (rc_mount)
   {
     Serial.print("Error mounting USB device ");
@@ -40,7 +40,7 @@ void setup()
   Serial.println("Opening audio file ...");
   
   // 16-bit PCM Mono 16kHz realigned noise reduction
-  FILE * f = fopen("/USB_DRIVE_NAME/AUDIO_SAMPLE.wav", "r+");
+  FILE * f = fopen("/USB_DRIVE/AUDIO_SAMPLE.wav", "r+");
   if (f == nullptr)
   {
     Serial.print("Error opening audio file: ");
