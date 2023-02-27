@@ -21,13 +21,12 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
+  /* Enable power for HOST USB connector. */
   pinMode(PA_15, OUTPUT);
   digitalWrite(PA_15, HIGH);
 
   Serial.println("Please connect a USB stick to the GIGA's USB port ...");
-
-  while (!msd.connect())
-    delay(1000);
+  while (!msd.connect()) delay(100);
 
   Serial.println("Mounting USB device ...");
   int const rc_mount = usb.mount(&msd);
