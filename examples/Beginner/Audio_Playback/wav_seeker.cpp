@@ -20,7 +20,8 @@ typedef struct uFMT_STRUCT {
   short sig_bps;
 } FMT_STRUCT;
 
-void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
+void wav_play_rl(FILE * wavefile, AdvancedDAC & dac_out, bool const verbosity)
+{
   unsigned chunk_id,chunk_size,channel;
   unsigned data,samp_int,i;
   short unsigned dac_data;
@@ -46,11 +47,12 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
   fread(&chunk_size,4,1,wavefile);
 
   while (!feof(wavefile)) {
-    if (verbosity)
+    if (verbosity) {
       Serial.print(F("Read chunk ID ="));
       Serial.println(chunk_id);
       Serial.print(F("Read chunk size ="));
       Serial.println(chunk_size);
+    }
 
     switch (chunk_id) {
       case 0x46464952:
@@ -131,27 +133,30 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
             for (channel=0;channel<wav_format.num_channels;channel++) {
               switch (wav_format.sig_bps) {
                 case 16:
-                  if (verbosity)
+                  if (verbosity) {
                     Serial.print(F("16 bit channel ="));
                     Serial.println(channel);
                     Serial.print(F("  data = "));
                     Serial.println(data_sptr[channel]);
+                  }
                   slice_value+=data_sptr[channel];
                   break;
                 case 32:
-                  if (verbosity)
+                  if (verbosity) {
                     Serial.print(F("32 bit channel ="));
                     Serial.println(channel);
                     Serial.print(F("  data = "));
                     Serial.println(data_wptr[channel]);
+                  }
                   slice_value+=data_wptr[channel];
                   break;
                 case 8:
-                  if (verbosity)
+                  if (verbosity) {
                     Serial.print(F("8 bit channel ="));
                     Serial.println(channel);
                     Serial.print(F(" data = "));
                     Serial.println((int)data_bptr[channel]);
+                  }
                   slice_value+=data_bptr[channel];
                   break;
               }
@@ -171,7 +176,7 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
                           break;
             }
             dac_data=(short unsigned)slice_value;
-            if (verbosity)
+            if (verbosity) {
               Serial.print(F("DAC-Data >>>>>>>>>>>>>>"));
               Serial.print(F("sample ="));
               Serial.println(slice);
@@ -181,6 +186,7 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
               Serial.println((int)slice_value);
               Serial.print(F("dac_data ="));
               Serial.println(dac_data);
+            }
             DAC_fifo[DAC_wptr]=dac_data;
 
             // Custom_mode begin
@@ -189,8 +195,8 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
             // Conditional addition to switch between channels - FOR STEREO
             if (DAC_wptr >= 255){
               static size_t lut_offs = 0;
-              
-              Serial.println(F("Proceeding DAC ..."));
+              if (verbosity)
+                Serial.println(F("Proceeding DAC ..."));
               // Get a free buffer for writing.
               SampleBuffer buf = dac_out.dequeue();
               // Write data to buffer.
@@ -199,12 +205,14 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
               }
 
               // Writethe buffer to DAC.
-              Serial.println(F("Writing to DAC ..."));
+              if (verbosity)
+                Serial.println(F("Writing to DAC ..."));
               dac_out.write(buf);
               
               DAC_wptr = 0;
             } else {
-              Serial.println(F("Slicing"));
+              if(verbosity)
+                Serial.println(F("Slicing"));
             }
             // Custom_mode end
           }
@@ -213,16 +221,19 @@ void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity){
         free(slice_buf);
         break;
       case 0x5453494c:
-        if (verbosity)
+        if (verbosity) {
           Serial.print(F("INFO chunk, size"));
           Serial.println(chunk_size);
+        }
         fseek(wavefile,chunk_size,SEEK_CUR);
         break;
       default:
-        Serial.print(F("unknown chunk type ="));
-        Serial.println(chunk_id);
-        Serial.print(F("chunk size ="));
-        Serial.println(chunk_size);
+        if (verbosity) {
+          Serial.print(F("unknown chunk type ="));
+          Serial.println(chunk_id);
+          Serial.print(F("chunk size ="));
+          Serial.println(chunk_size);
+        }
         data=fseek(wavefile,chunk_size,SEEK_CUR);
         break;
     }

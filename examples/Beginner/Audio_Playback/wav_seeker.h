@@ -1,6 +1,6 @@
 
-#include "AdvancedDAC.h"
+#include <stdlib.h>
 
-struct adc_descr_t;
+#include <Arduino_AdvancedAnalog.h>
 
-void wav_play_rl(FILE *wavefile, AdvancedDAC &dac_out, bool verbosity);
+void wav_play_rl(FILE * wavefile, AdvancedDAC & dac_out, bool const verbosity);

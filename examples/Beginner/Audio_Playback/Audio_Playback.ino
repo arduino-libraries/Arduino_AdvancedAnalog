@@ -4,8 +4,9 @@
  * In order for this sketch to work you need to rename 'USB_DRIVE' to the name of your USB stick drive.
 */
 
-#include <USBHostMbed5.h>
+#include <Arduino_AdvancedAnalog.h>
 #include <DigitalOut.h>
+#include <USBHostMbed5.h>
 #include <FATFileSystem.h>
 
 // AdvancedDAC library is included inside wav_seeker library
