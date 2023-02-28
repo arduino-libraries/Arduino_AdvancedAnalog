@@ -32,7 +32,7 @@ void loop() {
             buf[i] =  lut[lut_offs % lut_size];
         }
 
-        // Writethe buffer to DAC.
+        // Write the buffer to DAC.
         dac1.write(buf);
     }
 }
