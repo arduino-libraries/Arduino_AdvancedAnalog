@@ -33,7 +33,7 @@ void dac_output_sq(AdvancedDAC &dac_out) {
           buf.data()[i] =  (i % 2 == 0) ? 0: 0xfff;
         }
         
-        // Writethe buffer to DAC.
+        // Write the buffer to DAC.
         dac_out.write(buf);
     }
 }
