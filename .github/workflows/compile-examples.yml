@@ -49,6 +49,8 @@ jobs:
           libraries: |
             # Install the library from the local path.
             - source-path: ./
+            - source-url: https://github.com/facchinm/USBHostMbed5.git
+              version: test_hs_in_fs
           sketch-paths: |
             - examples
           enable-deltas-report: true
