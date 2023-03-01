@@ -24,4 +24,4 @@ jobs:
         with:
           official: true
           project-type: library
-          library-manager: submit
+          library-manager: update
