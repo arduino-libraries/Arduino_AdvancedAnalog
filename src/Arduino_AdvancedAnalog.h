@@ -24,10 +24,6 @@
  * INCLUDE
  **************************************************************************************/
 
-#ifdef ARDUINO_PORTENTA_H7_M4
-# error "This library only works on the M7 core of any STM32H747 based board (Portenta H7, Giga)."
-#endif
-
 #include "AdvancedADC.h"
 #include "AdvancedDAC.h"
 
