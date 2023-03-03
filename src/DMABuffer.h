@@ -92,15 +92,19 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         }
 
         void flush() {
+            #if __DCACHE_PRESENT
             if (ptr) {
                 SCB_CleanDCache_by_Addr(data(), bytes());
             }
+            #endif
         }
 
         void invalidate() {
+            #if __DCACHE_PRESENT
             if (ptr) {
                 SCB_InvalidateDCache_by_Addr(data(), bytes());
             }
+            #endif
         }
 
         uint32_t timestamp() {
