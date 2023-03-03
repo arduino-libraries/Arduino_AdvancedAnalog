@@ -182,6 +182,15 @@ int AdvancedDAC::stop()
     return 1;
 }
 
+int AdvancedDAC::frequency(uint32_t frequency)
+{
+    if (descr && descr->pool) {
+        // Reconfigure the trigger timer.
+        dac_descr_deinit(descr, false);
+        hal_tim_config(&descr->tim, frequency);
+    }
+}
+
 AdvancedDAC::~AdvancedDAC()
 {
     dac_descr_deinit(descr, true);
