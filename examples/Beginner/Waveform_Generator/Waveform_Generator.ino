@@ -55,13 +55,9 @@ void generate_waveform(int cmd)
             } else {
               break;
             }
-            
-            dac1.stop();
-            delay(500);
-            if (!dac1.begin(AN_RESOLUTION_8, dac_frequency * N_SAMPLES, N_SAMPLES, 32)) {
-              Serial.println("Failed to start DAC1 !");
-            }
-            delay(500);
+
+            // Change frequency.
+            dac1.frequency(dac_frequency * N_SAMPLES);
             break;
             
         default:
