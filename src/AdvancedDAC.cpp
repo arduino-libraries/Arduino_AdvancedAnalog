@@ -182,7 +182,7 @@ int AdvancedDAC::stop()
     return 1;
 }
 
-int AdvancedDAC::frequency(uint32_t frequency)
+int AdvancedDAC::frequency(uint32_t const frequency)
 {
     if (descr && descr->pool) {
         // Reconfigure the trigger timer.
