@@ -34,7 +34,6 @@ jobs:
           - fqbn: arduino:mbed_giga:giga
             platforms: |
               - name: arduino:mbed_giga
-                source-url: https://downloads.arduino.cc/packages/package_mbed_index.json
 
     steps:
       - name: Checkout repository
