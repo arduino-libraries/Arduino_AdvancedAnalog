@@ -135,7 +135,7 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
 
 int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers) {
     // Sanity checks.
-    if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT)) {
+    if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT) || (descr && descr->pool)) {
         return 0;
     }
 
