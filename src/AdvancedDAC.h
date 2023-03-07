@@ -49,6 +49,7 @@ class AdvancedDAC {
         void write(SampleBuffer dmabuf);
         int begin(uint32_t resolution, uint32_t frequency, size_t n_samples=0, size_t n_buffers=0);
         int stop();
+        int frequency(uint32_t const frequency);
 };
 
 #endif /* ARDUINO_ADVANCED_DAC_H_ */
