@@ -23,7 +23,7 @@ Nothing.
 ### `begin()`
 
 
-Initialises the DAC with the specific parameters. The `begin()` method is firstly used to initialize the library.
+Initializes the ADC with the specific parameters. The `begin()` method is firstly used to initialize the library.
 
 If reconfigured during program execution, use `stop()` first.
 
@@ -78,7 +78,7 @@ Stops the ADC and buffer transfer, and releases any memory allocated for the buf
 #### Syntax
 
 ```
-dac.stop()
+adc.stop()
 ```
 
 #### Returns
@@ -110,7 +110,7 @@ Nothing.
 ### `begin()`
 
 
-Initialises the DAC with the specific parameters. The `begin()` method is firstly used to initialize the library.
+Initializes the DAC with the specific parameters. The `begin()` method is firstly used to initialize the library.
 
 If reconfigured during program execution, use `stop()` first.
 
