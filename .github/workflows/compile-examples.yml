@@ -48,7 +48,7 @@ jobs:
           libraries: |
             # Install the library from the local path.
             - source-path: ./
-            - source-url: https://github.com/facchinm/USBHostMbed5.git
+            - name: Arduino_USBHostMbed5
           sketch-paths: |
             - examples
           enable-deltas-report: true
