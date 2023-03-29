@@ -6,8 +6,10 @@
 */
 
 #include <Arduino_AdvancedAnalog.h>
+
+#include <Arduino_USBHostMbed5.h>
+
 #include <DigitalOut.h>
-#include <USBHostMbed5.h>
 #include <FATFileSystem.h>
 
 AdvancedDAC dac1(A12);
