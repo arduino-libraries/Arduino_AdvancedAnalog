@@ -74,7 +74,7 @@ int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn, uint32_t direction) {
 
     // DMA Init
     dma->Init.Mode                  = DMA_DOUBLE_BUFFER_M0;
-    dma->Init.Priority              = DMA_PRIORITY_LOW;
+    dma->Init.Priority              = DMA_PRIORITY_VERY_HIGH;
     dma->Init.Direction             = direction;
     dma->Init.FIFOMode              = DMA_FIFOMODE_ENABLE;
     dma->Init.FIFOThreshold         = DMA_FIFO_THRESHOLD_FULL;
