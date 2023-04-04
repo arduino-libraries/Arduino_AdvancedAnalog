@@ -73,10 +73,8 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABuffer {
         uint32_t flags;
 
     public:
-        DMABuffer *next;
-
         DMABuffer(Pool *pool=nullptr, size_t samples=0, size_t channels=0, T *mem=nullptr):
-            pool(pool), n_samples(samples), n_channels(channels), ptr(mem), ts(0), flags(0), next(nullptr) {
+            pool(pool), n_samples(samples), n_channels(channels), ptr(mem), ts(0), flags(0) {
         }
 
         T *data() {
@@ -158,36 +156,61 @@ template <class T, size_t A=__SCB_DCACHE_LINE_SIZE> class DMABufferPool {
     private:
         Queue<DMABuffer<T>*> wr_queue;
         Queue<DMABuffer<T>*> rd_queue;
-        std::unique_ptr<DMABuffer<T>[]> buffers;
         std::unique_ptr<uint8_t, decltype(&AlignedAlloc<A>::free)> pool;
 
     public:
         DMABufferPool(size_t n_samples, size_t n_channels, size_t n_buffers):
-            buffers(nullptr), pool(nullptr, AlignedAlloc<A>::free) {
+            wr_queue(n_buffers), rd_queue(n_buffers), pool(nullptr, AlignedAlloc<A>::free) {
             // Round up to next multiple of alignment.
             size_t bufsize = AlignedAlloc<A>::round(n_samples * n_channels * sizeof(T));
-            if (bufsize) {
-                // Allocate non-aligned memory for the DMA buffers objects.
-                buffers.reset(new DMABuffer<T>[n_buffers]);
-
-                // Allocate aligned memory pool for DMA buffers pointers.
+            if (bufsize && rd_queue && wr_queue) {
+                // Allocate an aligned memory pool for DMA buffers.
                 pool.reset((uint8_t *) AlignedAlloc<A>::malloc(n_buffers * bufsize));
-            }
-            if (buffers && pool) {
-                // Init DMA buffers using aligned pointers to dma buffers memory.
+                if (!pool) {
+                    // Failed to allocate memory pool.
+                    return;
+                }
+                // Allocate the DMA buffers, initialize them using aligned
+                // pointers from the pool, and add them to the ready queue.
                 for (size_t i=0; i<n_buffers; i++) {
-                    buffers[i] = DMABuffer<T>(this, n_samples, n_channels, (T *) &pool.get()[i * bufsize]);
-                    wr_queue.push(&buffers[i]);
+                    DMABuffer<T> *buf =  new DMABuffer<T>(
+                        this, n_samples, n_channels, (T *) &pool.get()[i * bufsize]
+                    );
+                    if (buf == nullptr) {
+                        break;
+                    }
+                    wr_queue.push(buf);
                 }
             }
         }
 
-        size_t writable() {
-            return wr_queue.size();
+        ~DMABufferPool() {
+            size_t count = 0;
+            DMABuffer<T> *buf = nullptr;
+
+            while (readable()) {
+                delete dequeue();
+                count ++;
+            }
+
+            while (writable()) {
+                delete allocate();
+                count ++;
+            }
         }
 
-        size_t readable() {
-            return rd_queue.size();
+        bool writable() {
+            return !(wr_queue.empty());
+        }
+
+        bool readable() {
+            return !(rd_queue.empty());
+        }
+
+        void flush() {
+            while (readable()) {
+                release(dequeue());
+            }
         }
 
         DMABuffer<T> *allocate() {
