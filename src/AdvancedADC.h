@@ -53,6 +53,7 @@ class AdvancedADC {
                 adc_pins[i] = analogPinToPinName(pins[i]);
             }
             n_channels = n_pins;
+            return begin(resolution, sample_rate, n_samples, n_buffers);
         }
         int stop();
 };
