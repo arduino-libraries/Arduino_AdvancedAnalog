@@ -48,7 +48,7 @@ class AdvancedADC {
         SampleBuffer read();
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, size_t n_pins, pin_size_t *pins) {
-            static_assert(n_pins < AN_MAX_ADC_CHANNELS, "A maximum of 5 channels can be sampled successively.");
+            if (n_pins > AN_MAX_ADC_CHANNELS) n_pins = AN_MAX_ADC_CHANNELS;
             for (size_t i = 0; i < n_pins; ++i) {
                 adc_pins[i] = analogPinToPinName(pins[i]);
             }
