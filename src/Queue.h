@@ -24,45 +24,58 @@
 
 template <class T> class Queue {
     private:
-        T head;
-        T tail;
-        size_t _size;
+        size_t capacity;
+        volatile size_t tail;
+        volatile size_t head;
+        std::unique_ptr<T[]> buff;
+
+    private:
+        inline size_t next_pos(size_t x) {
+            return (((x) + 1) % (capacity));
+        }
 
     public:
-        Queue(): head(nullptr), tail(nullptr), _size(0) {
-
+        Queue(size_t size=0):
+         capacity(size), tail(0), head(0), buff(nullptr) {
+            if (size) {
+                tail = head = 0;
+                capacity = size + 1;
+                buff.reset(new T[capacity]);
+            }
         }
 
-        size_t size() {
-            return _size;
+        void reset() {
+            tail = head = 0;
         }
 
-        bool empty() {
-            return !_size;
+        size_t empty() {
+            return tail == head;
         }
 
-        void push(T value) {
-            _size++;
-            value->next = nullptr;
-            if (head == nullptr) {
-                head = value;
-            }
-            if (tail) {
-                tail->next = value;
-            }
-            tail = value;
+        operator bool() const {
+            return buff.get() != nullptr;
         }
 
-        T pop() {
-            _size--;
-            T value = head;
-            if (head) {
-                head = head->next;
+        bool push(T data) {
+            bool ret = false;
+            size_t next = next_pos(head);
+            if (buff && (next != tail)) {
+                buff[head] = data;
+                head = next;
+                ret = true;
             }
-            if (head == nullptr) {
-                tail = nullptr;
+            return ret;
+        }
+
+        T pop(bool peek=false) {
+            if (buff && (tail != head)) {
+                T data = buff[tail];
+                if (!peek) {
+                    tail = next_pos(tail);
+                }
+                return data;
             }
-            return value;
+            return T();
         }
 };
 #endif //__QUEUE_H__

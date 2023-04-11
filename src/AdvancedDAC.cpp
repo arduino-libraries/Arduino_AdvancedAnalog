@@ -29,6 +29,7 @@ struct dac_descr_t {
     TIM_HandleTypeDef tim;
     uint32_t tim_trig;
     uint32_t resolution;
+    uint32_t dmaudr_flag;
     DMABufferPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
@@ -37,10 +38,10 @@ struct dac_descr_t {
 static DAC_HandleTypeDef dac = {0};
 
 static dac_descr_t dac_descr_all[] = {
-    {&dac, DAC_CHANNEL_1, {DMA1_Stream4, {DMA_REQUEST_DAC1_CH1}}, DMA1_Stream4_IRQn,
-        {TIM4}, DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R, nullptr, {nullptr, nullptr}},
-    {&dac, DAC_CHANNEL_2, {DMA1_Stream5, {DMA_REQUEST_DAC1_CH2}}, DMA1_Stream5_IRQn,
-        {TIM5}, DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R, nullptr, {nullptr, nullptr}},
+    {&dac, DAC_CHANNEL_1, {DMA1_Stream4, {DMA_REQUEST_DAC1_CH1}}, DMA1_Stream4_IRQn, {TIM4},
+        DAC_TRIGGER_T4_TRGO, DAC_ALIGN_12B_R, DAC_FLAG_DMAUDR1, nullptr, {nullptr, nullptr}},
+    {&dac, DAC_CHANNEL_2, {DMA1_Stream5, {DMA_REQUEST_DAC1_CH2}}, DMA1_Stream5_IRQn, {TIM5},
+        DAC_TRIGGER_T5_TRGO, DAC_ALIGN_12B_R, DAC_FLAG_DMAUDR2, nullptr, {nullptr, nullptr}},
 };
 
 static uint32_t DAC_RES_LUT[] = {
@@ -73,9 +74,11 @@ static dac_descr_t *dac_descr_get(uint32_t channel) {
 }
 
 static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
-    if (descr) {
+    if (descr != nullptr) {
         HAL_TIM_Base_Stop(&descr->tim);
         HAL_DAC_Stop_DMA(descr->dac, descr->channel);
+
+        __HAL_DAC_CLEAR_FLAG(descr->dac, descr->dmaudr_flag);
 
         for (size_t i=0; i<AN_ARRAY_SIZE(descr->dmabuf); i++) {
             if (descr->dmabuf[i]) {
@@ -89,13 +92,17 @@ static void dac_descr_deinit(dac_descr_t *descr, bool dealloc_pool) {
                 delete descr->pool;
             }
             descr->pool = nullptr;
+        } else {
+            descr->pool->flush();
         }
-
     }
 }
 
 bool AdvancedDAC::available() {
     if (descr != nullptr) {
+        if (__HAL_DAC_GET_FLAG(descr->dac, descr->dmaudr_flag)) {
+            dac_descr_deinit(descr, false);
+        }
         return descr->pool->writable();
     }
     return false;
@@ -113,11 +120,17 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
 }
 
 void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
+    static uint32_t buf_count = 0;
+
+    if (descr == nullptr) {
+        return;
+    }
+
     // Make sure any cached data is flushed.
     dmabuf.flush();
     descr->pool->enqueue(&dmabuf);
 
-    if (descr->dmabuf[0] == nullptr && descr->pool->readable() > 2) {
+    if (descr->dmabuf[0] == nullptr && (++buf_count % 3) == 0) {
         descr->dmabuf[0] = descr->pool->dequeue();
         descr->dmabuf[1] = descr->pool->dequeue();
 
@@ -126,7 +139,9 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
         (uint32_t *) descr->dmabuf[0]->data(), descr->dmabuf[0]->size(), descr->resolution);
 
         // Re/enable DMA double buffer mode.
+        HAL_NVIC_DisableIRQ(descr->dma_irqn);
         hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
+        HAL_NVIC_EnableIRQ(descr->dma_irqn);
 
         // Start trigger timer.
         HAL_TIM_Base_Start(&descr->tim);
@@ -135,7 +150,7 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
 
 int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples, size_t n_buffers) {
     // Sanity checks.
-    if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT) || (descr && descr->pool)) {
+    if (resolution >= AN_ARRAY_SIZE(DAC_RES_LUT) || descr != nullptr) {
         return 0;
     }
 
@@ -147,13 +162,14 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
 
     uint32_t function = pinmap_function(dac_pins[0], PinMap_DAC);
     descr = dac_descr_get(DAC_CHAN_LUT[STM_PIN_CHANNEL(function) - 1]);
-    if (descr == nullptr || descr->pool) {
+    if (descr == nullptr) {
         return 0;
     }
 
     // Allocate DMA buffer pool.
     descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
     if (descr->pool == nullptr) {
+        descr = nullptr;
         return 0;
     }
     descr->resolution = DAC_RES_LUT[resolution];
@@ -178,13 +194,16 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
 
 int AdvancedDAC::stop()
 {
-    dac_descr_deinit(descr, true);
+    if (descr != nullptr) {
+        dac_descr_deinit(descr, true);
+        descr = nullptr;
+    }
     return 1;
 }
 
 int AdvancedDAC::frequency(uint32_t const frequency)
 {
-    if (descr && descr->pool) {
+    if (descr != nullptr) {
         // Reconfigure the trigger timer.
         dac_descr_deinit(descr, false);
         hal_tim_config(&descr->tim, frequency);
@@ -200,9 +219,10 @@ extern "C" {
 
 void DAC_DMAConvCplt(DMA_HandleTypeDef *dma, uint32_t channel) {
     dac_descr_t *descr = dac_descr_get(channel);
+
     // Release the DMA buffer that was just done, allocate a new one,
     // and update the next DMA memory address target.
-    if (descr->pool->readable()) {
+    if (descr && descr->pool->readable()) {
         // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
         size_t ct = ! hal_dma_get_ct(dma);
         descr->dmabuf[ct]->release();
