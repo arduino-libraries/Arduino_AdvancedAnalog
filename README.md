@@ -17,7 +17,7 @@ Advanced Analog Library for Arduino Giga.
 
 ## :bug: Bugs & Issues
 
-If you want to report an issue with this library, you can submit it to the [issue tracker](https://github.com/arduino-libraries/Arduino_Braccio_plusplus/issues) of this repository. Remember to include as much detail as you can about your hardware set-up, code and steps for reproducing the issue. Make sure you're using an original Arduino board.
+If you want to report an issue with this library, you can submit it to the [issue tracker](https://github.com/arduino-libraries/Arduino_AdvancedAnalog/issues) of this repository. Remember to include as much detail as you can about your hardware set-up, code and steps for reproducing the issue. Make sure you're using an original Arduino board.
 
 ## :technologist: Development
 
