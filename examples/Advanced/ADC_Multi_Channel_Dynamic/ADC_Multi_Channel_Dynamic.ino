@@ -34,7 +34,7 @@ void queryPins() {
         }
     } while (!(c == '\n' || num_active_pins >= AN_MAX_ADC_CHANNELS));
 
-    // No (valid) input? Repeat previous measurement cylce
+    // No (valid) input? Repeat previous measurement cycle
     if (!num_active_pins) {
         num_active_pins = old_num_active_pins;
     }
