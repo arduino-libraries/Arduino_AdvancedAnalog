@@ -35,15 +35,15 @@ adc0.begin(resolution, sample_rate, n_samples, n_buffers)
 
 #### Parameters
 
-- `enum` - resolution (choose from 8, 10, 12, 14, 16 bit)
+- `enum` - analog read resolution (choose from 8, 10, 12, 14, 16 bit).
   - `AN_RESOLUTION_8`
   - `AN_RESOLUTION_10`
   - `AN_RESOLUTION_12`
   - `AN_RESOLUTION_14`
   - `AN_RESOLUTION_16`
-- `int` - frequency
-- `int` - n_samples
-- `int` - n_buffers
+- `int` - **sample_rate** - the sample rate / frequency in Hertz, e.g. `16000`.
+- `int` - **n_samples** - number of samples we want to acquire, e.g. `32`. When reading the ADC, we store these samples into a specific buffer (see [SampleBuffer](#samplebuffer)), and read them via `buffer[x]`, where `x` is the sample you want to retrieve.
+- `int` - **n_buffers** - the number of buffers in the queue.
 
 #### Returns
 
@@ -126,9 +126,10 @@ dac0.begin(resolution, frequency, n_samples, n_buffers)
   - `AN_RESOLUTION_8`
   - `AN_RESOLUTION_10`
   - `AN_RESOLUTION_12`
-- `int` - frequency 
-- `int` - n_samples 
-- `int` - n_buffers
+- `int` - **frequency** - the frequency in Hertz, e.g. `8000`.
+- `int` - **n_samples** - number of samples we want to write, e.g. `32`. When writing to the DAC, we first write the samples into a buffer (see [SampleBuffer](#samplebuffer)), and write it to the DAC using `dac_out.write(buf)`.
+- `int` - **n_buffers** - the number of buffers in the queue.
+
 
 #### Returns
 
