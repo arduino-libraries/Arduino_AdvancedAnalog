@@ -195,8 +195,10 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
     adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISING;
     adc->Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
 
-    HAL_ADC_Init(adc);
-    HAL_ADCEx_Calibration_Start(adc, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+    if (HAL_ADC_Init(adc) != HAL_OK 
+        || HAL_ADCEx_Calibration_Start(adc, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED) != HAL_OK) {
+            return -1;
+    }
 
     ADC_ChannelConfTypeDef sConfig = {0};
     sConfig.Offset       = 0;
@@ -209,7 +211,7 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
         uint32_t channel = STM_PIN_CHANNEL(function);
         sConfig.Rank     = ADC_RANK_LUT[rank];
         sConfig.Channel  = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
-        HAL_ADC_ConfigChannel(adc, &sConfig);
+        if (HAL_ADC_ConfigChannel(adc, &sConfig) != HAL_OK) return -1;
     }
 
     return 0;

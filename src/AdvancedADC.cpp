@@ -184,21 +184,22 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     descr->dmabuf[1] = descr->pool->allocate();
 
     // Init and config DMA.
-    hal_dma_config(&descr->dma, descr->dma_irqn, DMA_PERIPH_TO_MEMORY);
+    if (hal_dma_config(&descr->dma, descr->dma_irqn, DMA_PERIPH_TO_MEMORY) < 0) return 0;
 
     // Init and config ADC.
-    hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins, n_channels);
+    if (hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins, n_channels) < 0) return 0;
 
     // Link DMA handle to ADC handle, and start the ADC.
     __HAL_LINKDMA(&descr->adc, DMA_Handle, descr->dma);
-    HAL_ADC_Start_DMA(&descr->adc, (uint32_t *) descr->dmabuf[0]->data(), descr->dmabuf[0]->size());
+    if (HAL_ADC_Start_DMA(&descr->adc, (uint32_t *) descr->dmabuf[0]->data(), descr->dmabuf[0]->size()) != HAL_OK) return 0;
 
     // Re/enable DMA double buffer mode.
     hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
 
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
-    HAL_TIM_Base_Start(&descr->tim);
+    if (HAL_TIM_Base_Start(&descr->tim) != HAL_OK) return 0;
+    
     return 1;
 }
 
