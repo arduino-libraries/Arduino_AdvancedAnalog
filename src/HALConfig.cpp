@@ -211,7 +211,9 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
         uint32_t channel = STM_PIN_CHANNEL(function);
         sConfig.Rank     = ADC_RANK_LUT[rank];
         sConfig.Channel  = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
-        if (HAL_ADC_ConfigChannel(adc, &sConfig) != HAL_OK) return -1;
+        if (HAL_ADC_ConfigChannel(adc, &sConfig) != HAL_OK) {
+            return -1;
+        }
     }
 
     return 0;
