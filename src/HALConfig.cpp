@@ -91,7 +91,7 @@ int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn, uint32_t direction) {
     }
 
     // NVIC configuration for DMA Input data interrupt.
-    HAL_NVIC_SetPriority(irqn, 1, 0);
+    HAL_NVIC_SetPriority(irqn, 0, 0);
     HAL_NVIC_EnableIRQ(irqn);
 
     return 0;
