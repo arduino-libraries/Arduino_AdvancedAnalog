@@ -238,8 +238,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
     size_t ct = ! hal_dma_get_ct(&descr->dma);
 
-    // Timestamp the buffer. TODO: Should move to timer IRQ.
-    descr->dmabuf[ct]->timestamp(HAL_GetTick());
+    // Timestamp the buffer.
+    descr->dmabuf[ct]->timestamp(us_ticker_read());
 
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
