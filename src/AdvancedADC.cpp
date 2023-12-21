@@ -208,7 +208,9 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // Re/enable DMA double buffer mode.
+    HAL_NVIC_DisableIRQ(descr->dma_irqn);
     hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
+    HAL_NVIC_EnableIRQ(descr->dma_irqn);
 
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
@@ -236,8 +238,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
     size_t ct = ! hal_dma_get_ct(&descr->dma);
 
-    // Timestamp the buffer. TODO: Should move to timer IRQ.
-    descr->dmabuf[ct]->timestamp(HAL_GetTick());
+    // Timestamp the buffer.
+    descr->dmabuf[ct]->timestamp(us_ticker_read());
 
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
