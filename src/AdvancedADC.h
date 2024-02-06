@@ -55,6 +55,17 @@ class AdvancedADC {
             n_channels = n_pins;
             return begin(resolution, sample_rate, n_samples, n_buffers);
         }
+        void clear();  //clears any existing DMA buffers from read queue
+        int ready(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
+        int ready(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, size_t n_pins, pin_size_t *pins) {
+            if (n_pins > AN_MAX_ADC_CHANNELS) n_pins = AN_MAX_ADC_CHANNELS;
+            for (size_t i = 0; i < n_pins; ++i) {
+                adc_pins[i] = analogPinToPinName(pins[i]);
+            }
+            n_channels = n_pins;
+            return ready(resolution, sample_rate, n_samples, n_buffers);
+        }
+        int start(uint32_t sample_rate);
         int stop();
 };
 
