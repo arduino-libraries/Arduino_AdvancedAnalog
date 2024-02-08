@@ -218,7 +218,9 @@ int AdvancedADC::start(uint32_t sample_rate) {
     }
 
     // Re/enable DMA double buffer mode.
+    HAL_NVIC_DisableIRQ(descr->dma_irqn);
     hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
+    HAL_NVIC_EnableIRQ(descr->dma_irqn);
 
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
