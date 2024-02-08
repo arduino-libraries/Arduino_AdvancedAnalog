@@ -122,7 +122,6 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     if (resolution >= AN_ARRAY_SIZE(ADC_RES_LUT) || (descr && descr->pool)) {
         return 0;
     }
-  
     // Clear ALTx pin.
     for (size_t i=0; i<n_channels; i++) {
         adc_pins[i] =  (PinName) (adc_pins[i] & ~(ADC_PIN_ALT_MASK));
