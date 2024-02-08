@@ -202,9 +202,10 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         return 0;
     }
 
-    // Start sampling immediately unless start==false.
-    if (start) {  
-        return start(sample_rate);
+    sampling_rate = sample_rate;
+    // Start sampling immediately unless start_sampling==false.
+    if (start_sampling) {  
+        return start();
     }
 
     return 1;
