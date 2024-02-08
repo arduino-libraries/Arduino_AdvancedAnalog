@@ -56,7 +56,7 @@ class AdvancedADC {
             return begin(resolution, sample_rate, n_samples, n_buffers, start);
         }
         void clear();
-        int start(uint32_t sample_rate);
+        int start();
         int stop();
 };
 
