@@ -238,9 +238,10 @@ int AdvancedADC::stop()
     return 1;
 }
 
-void AdvancedADC::clear()
-{
-    descr->pool->flush();
+void AdvancedADC::clear() {
+    if (descr && descr->pool) {
+        descr->pool->flush();
+    }
 }
 
 AdvancedADC::~AdvancedADC()
