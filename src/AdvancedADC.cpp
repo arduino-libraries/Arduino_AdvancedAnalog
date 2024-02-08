@@ -202,9 +202,9 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         return 0;
     }
 
-    //if noStart is not set, proceed with starting ADC capture
-    if(!noStart) {  
-        return(start(sample_rate));
+    // Start sampling immediately unless start==false.
+    if (start) {  
+        return start(sample_rate);
     }
 
     return 1;
