@@ -167,8 +167,21 @@ static uint32_t ADC_RANK_LUT[] = {
 };
 
 int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels) {
-    // Set ADC clock source.
-    __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
+    // PLL3 80MHz for ADC
+    RCC_PeriphCLKInitTypeDef pclkinit = {0};
+    pclkinit.PLL3.PLL3M = 4;
+    pclkinit.PLL3.PLL3N = 80;
+    pclkinit.PLL3.PLL3P = 2;
+    pclkinit.PLL3.PLL3Q = 2;
+    pclkinit.PLL3.PLL3R = 4;
+    pclkinit.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
+    pclkinit.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+    pclkinit.PLL3.PLL3FRACN = 0;
+    pclkinit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+    pclkinit.AdcClockSelection = RCC_ADCCLKSOURCE_PLL3;
+    if (HAL_RCCEx_PeriphCLKConfig(&pclkinit) != HAL_OK) {
+        return -1;
+    }
 
     // Enable ADC clock
     if (adc->Instance == ADC1) {
