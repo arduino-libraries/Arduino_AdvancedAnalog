@@ -26,6 +26,7 @@
 
 #include "AdvancedADC.h"
 #include "AdvancedDAC.h"
+#include "AdvancedI2S.h"
 #include "WavReader.h"
 
 #endif /* ADVANCEDANALOGREDUX_ARDUINO_ADVANCEDANALOG_H */
