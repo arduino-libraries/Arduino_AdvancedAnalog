@@ -71,6 +71,7 @@ int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
 int hal_dma_config(DMA_HandleTypeDef *dma, IRQn_Type irqn, uint32_t direction) {
     // Enable DMA clock
     __HAL_RCC_DMA1_CLK_ENABLE();
+    __HAL_RCC_DMA2_CLK_ENABLE();
 
     // DMA Init
     dma->Init.Mode                  = DMA_DOUBLE_BUFFER_M0;
@@ -216,5 +217,49 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
         }
     }
 
+    return 0;
+}
+
+int hal_i2s_config(I2S_HandleTypeDef *i2s, uint32_t sample_rate, uint32_t mode, bool mck_enable) {
+    // Set I2S clock source.
+    RCC_PeriphCLKInitTypeDef pclk_init = {0};
+    pclk_init.PLL3.PLL3M = 16;
+    pclk_init.PLL3.PLL3N = 344;
+    pclk_init.PLL3.PLL3P = 7;
+    pclk_init.PLL3.PLL3Q = 5;
+    pclk_init.PLL3.PLL3R = 5;
+    pclk_init.PLL3.PLL3FRACN = 0;
+    pclk_init.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_0;
+    pclk_init.PLL3.PLL3VCOSEL = RCC_PLL3VCOMEDIUM;
+    pclk_init.PeriphClockSelection |= RCC_PERIPHCLK_SPI123;
+    pclk_init.Spi123ClockSelection  = RCC_SPI123CLKSOURCE_PLL3;
+
+    if (HAL_RCCEx_PeriphCLKConfig(&pclk_init) != HAL_OK) {
+        return -1;
+    }
+
+    // Enable I2S clock
+    if (i2s->Instance == SPI1) {
+        __HAL_RCC_SPI1_CLK_ENABLE();
+    } else if (i2s->Instance == SPI2) {
+        __HAL_RCC_SPI2_CLK_ENABLE();
+    } else if (i2s->Instance == SPI3) {
+        __HAL_RCC_SPI3_CLK_ENABLE();
+    }
+
+    i2s->Init.Mode = mode;
+    i2s->Init.Standard = I2S_STANDARD_PHILIPS;
+    i2s->Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
+    i2s->Init.MCLKOutput = mck_enable ? I2S_MCLKOUTPUT_ENABLE : I2S_MCLKOUTPUT_DISABLE;
+    i2s->Init.AudioFreq = sample_rate;
+    i2s->Init.CPOL = I2S_CPOL_LOW;
+    i2s->Init.FirstBit = I2S_FIRSTBIT_MSB;
+    i2s->Init.WSInversion = I2S_WS_INVERSION_DISABLE;
+    i2s->Init.Data24BitAlignment = I2S_DATA_24BIT_ALIGNMENT_RIGHT;
+    i2s->Init.MasterKeepIOState = I2S_MASTER_KEEP_IO_STATE_DISABLE;
+
+    if (HAL_I2S_Init(i2s) != HAL_OK) {
+        return -1;
+    }
     return 0;
 }
