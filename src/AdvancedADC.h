@@ -36,19 +36,23 @@ class AdvancedADC {
         template <typename ... T>
         AdvancedADC(pin_size_t p0, T ... args): n_channels(0), descr(nullptr) {
             static_assert(sizeof ...(args) < AN_MAX_ADC_CHANNELS,
-                    "A maximum of 5 channels can be sampled successively.");
+                    "A maximum of 16 channels can be sampled successively.");
 
             for (auto p : {p0, args...}) {
                 adc_pins[n_channels++] = analogPinToPinName(p);
             }
         }
-        AdvancedADC(): n_channels(0), descr(nullptr) {}
+        AdvancedADC(): n_channels(0), descr(nullptr) {
+        }
         ~AdvancedADC();
         bool available();
         SampleBuffer read();
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, size_t n_pins, pin_size_t *pins) {
-            if (n_pins > AN_MAX_ADC_CHANNELS) n_pins = AN_MAX_ADC_CHANNELS;
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers,
+                size_t n_pins, pin_size_t *pins) {
+            if (n_pins > AN_MAX_ADC_CHANNELS) {
+                n_pins = AN_MAX_ADC_CHANNELS;
+            }
             for (size_t i = 0; i < n_pins; ++i) {
                 adc_pins[i] = analogPinToPinName(pins[i]);
             }
