@@ -46,18 +46,18 @@ int hal_tim_config(TIM_HandleTypeDef *tim, uint32_t t_freq) {
     sConfig.MasterSlaveMode         = TIM_MASTERSLAVEMODE_ENABLE;
 
     if (tim->Instance == TIM1) {
-        __HAL_RCC_TIM1_CLK_ENABLE();
+                __HAL_RCC_TIM1_CLK_ENABLE();
     } else if (tim->Instance == TIM2) {
         __HAL_RCC_TIM2_CLK_ENABLE();
-    } else if (tim->Instance == TIM3) {
+            } else if (tim->Instance == TIM3) {
         __HAL_RCC_TIM3_CLK_ENABLE();
-    } else if (tim->Instance == TIM4) {
+            } else if (tim->Instance == TIM4) {
         __HAL_RCC_TIM4_CLK_ENABLE();
-    } else if (tim->Instance == TIM5) {
+            } else if (tim->Instance == TIM5) {
         __HAL_RCC_TIM5_CLK_ENABLE();
-    } else if (tim->Instance == TIM6) {
+            } else if (tim->Instance == TIM6) {
         __HAL_RCC_TIM6_CLK_ENABLE();
-    }
+            }
 
     // Init and config the timer.
     __HAL_TIM_CLEAR_FLAG(tim, TIM_FLAG_UPDATE);
@@ -167,10 +167,22 @@ static uint32_t ADC_RANK_LUT[] = {
     ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
 };
 
+int hal_enable_dual_mode()
+{
+    LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_DUAL_REG_SIMULT);
+    return(1);
+}
+
+int hal_disable_dual_mode()
+{
+    LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_INDEPENDENT);
+    return(1);
+}
+
 int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels) {
     // Set ADC clock source.
     __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
-
+   
     // Enable ADC clock
     if (adc->Instance == ADC1) {
         __HAL_RCC_ADC12_CLK_ENABLE();
@@ -206,7 +218,7 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
     sConfig.SingleDiff   = ADC_SINGLE_ENDED;
     sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
-
+    
     for (size_t rank=0; rank<n_channels; rank++) {
         uint32_t function = pinmap_function(adc_pins[rank], PinMap_ADC);
         uint32_t channel = STM_PIN_CHANNEL(function);
