@@ -167,14 +167,12 @@ static uint32_t ADC_RANK_LUT[] = {
     ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
 };
 
-int hal_enable_dual_mode()
-{
+int hal_enable_dual_mode() {
     LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_DUAL_REG_SIMULT);
     return(1);
 }
 
-int hal_disable_dual_mode()
-{
+int hal_disable_dual_mode() {
     LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_INDEPENDENT);
     return(1);
 }
