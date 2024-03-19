@@ -267,14 +267,12 @@ int AdvancedADCDual::begin(AdvancedADC *in1, AdvancedADC *in2, uint32_t resoluti
 	result=adcIN1->begin(resolution,sample_rate,n_samples,n_buffers,1,&(adc_pins_unmapped[0]),false);
 	if(result!=1 || adcIN1->getAssignedADC()!=1)
 	{
-        Serial.println("First ADC Assigned: "+String(adcIN1->getAssignedADC()));
 		return(0);
 	}
 	//Configure all other pins on ADC2
 	result=adcIN2->begin(resolution,sample_rate,n_samples,n_buffers,n_channels-1,&(adc_pins_unmapped[1]),false);
 	if(result!=1 || adcIN2->getAssignedADC()!=2)
 	{
-        Serial.println("Second ADC Assigned: "+String(adcIN1->getAssignedADC()));
 		return(0);
 	}
 	
