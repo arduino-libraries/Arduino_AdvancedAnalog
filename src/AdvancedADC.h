@@ -45,20 +45,41 @@ class AdvancedADC {
         AdvancedADC(): n_channels(0), descr(nullptr) {
         }
         ~AdvancedADC();
+        int id();
         bool available();
         SampleBuffer read();
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers,
-                size_t n_pins, pin_size_t *pins) {
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                size_t n_buffers, bool start=true);
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                size_t n_buffers, size_t n_pins, pin_size_t *pins, bool start=true) {
             if (n_pins > AN_MAX_ADC_CHANNELS) {
                 n_pins = AN_MAX_ADC_CHANNELS;
             }
             for (size_t i = 0; i < n_pins; ++i) {
                 adc_pins[i] = analogPinToPinName(pins[i]);
             }
+
             n_channels = n_pins;
-            return begin(resolution, sample_rate, n_samples, n_buffers);
+            return begin(resolution, sample_rate, n_samples, n_buffers, start);
         }
+        int start(uint32_t sample_rate);
+        int stop();
+        void clear();
+        size_t channels();
+};
+
+class AdvancedADCDual {
+    private:
+        AdvancedADC &adc1;
+        AdvancedADC &adc2;
+        size_t n_channels;
+
+    public:
+        AdvancedADCDual(AdvancedADC &adc1_in, AdvancedADC &adc2_in):
+            n_channels(0), adc1(adc1_in), adc2(adc2_in) {
+        }
+        ~AdvancedADCDual();
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
         int stop();
 };
 

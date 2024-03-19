@@ -97,6 +97,20 @@ static void dac_descr_deinit(adc_descr_t *descr, bool dealloc_pool) {
     }
 }
 
+int AdvancedADC::id() {
+    if (descr) {
+        ADC_TypeDef *adc = descr->adc.Instance;
+        if (adc == ADC1) {
+            return 1;
+        } else if (adc == ADC2) {
+            return 2;
+        } else if (adc == ADC3) {
+            return 3;
+        }
+    }
+    return -1;
+}
+
 bool AdvancedADC::available() {
     if (descr != nullptr) {
         return descr->pool->readable();
@@ -115,9 +129,9 @@ DMABuffer<Sample> &AdvancedADC::read() {
     return NULLBUF;
 }
 
-int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers) {
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, bool start) {
+    
     ADCName instance = ADC_NP;
-
     // Sanity checks.
     if (resolution >= AN_ARRAY_SIZE(ADC_RES_LUT) || (descr && descr->pool)) {
         return 0;
@@ -159,6 +173,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
 
     // Configure ADC pins.
     pinmap_pinout(adc_pins[0], PinMap_ADC);
+    
     uint8_t ch_init = 1;
     for (size_t i=1; i<n_channels; i++) {
         for (size_t j=0; j<AN_ARRAY_SIZE(adc_pin_alt); j++) {
@@ -188,6 +203,8 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     if (descr->pool == nullptr) {
         return 0;
     }
+
+    // Allocate the two DMA buffers used for double buffering.
     descr->dmabuf[0] = descr->pool->allocate();
     descr->dmabuf[1] = descr->pool->allocate();
 
@@ -212,27 +229,89 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
     HAL_NVIC_EnableIRQ(descr->dma_irqn);
 
-    // Init, config and start the ADC timer.
+    if (start) {
+        return this->start(sample_rate);
+    }
+
+    return 1;
+}
+
+int AdvancedADC::start(uint32_t sample_rate){
+    // Initialize and configure the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
+    
+    // Start the ADC timer. Note, if dual ADC mode is enabled,
+    // this will also start ADC2.
     if (HAL_TIM_Base_Start(&descr->tim) != HAL_OK) {
         return 0;
     }
-    
+
     return 1;
 }
 
-int AdvancedADC::stop()
-{
+int AdvancedADC::stop() {
     dac_descr_deinit(descr, true);
     return 1;
 }
 
-AdvancedADC::~AdvancedADC()
-{
+void AdvancedADC::clear() {
+    if (descr && descr->pool) {
+        descr->pool->flush();
+    }
+}
+
+size_t AdvancedADC::channels() {
+    return n_channels;
+}
+
+AdvancedADC::~AdvancedADC() {
     dac_descr_deinit(descr, true);
+}
+
+int AdvancedADCDual::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers) {
+    // The two ADCs must have the same number of channels.
+    if (adc1.channels() != adc2.channels()) {
+        return 0;
+    }
+
+    // Configure the ADCs.
+    if (!adc1.begin(resolution, sample_rate, n_samples, n_buffers, false)) {
+        return 0;
+    }
+
+    if (!adc2.begin(resolution, sample_rate, n_samples, n_buffers, false)) {
+        adc1.stop();
+        return 0;
+    }
+
+    // Note only ADC1 (master) and ADC2 can be used in dual mode.
+    if (adc1.id() != 1 || adc2.id() != 2) {
+        adc1.stop();
+        adc2.stop();
+        return 0;
+    }
+
+    // Enable dual ADC mode.
+    hal_adc_enable_dual_mode(true);
+
+    // Start ADC1, note ADC2 is also automatically started.
+    return adc1.start(sample_rate);
+}
+
+int AdvancedADCDual:: stop() {
+    adc1.stop();
+    adc2.stop();
+    // Disable dual mode.
+    hal_adc_enable_dual_mode(false);
+    return 1;
+}
+
+AdvancedADCDual::~AdvancedADCDual() {
+    stop();
 }
 
 extern "C" {
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     adc_descr_t *descr = adc_descr_get(adc->Instance);
     // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
