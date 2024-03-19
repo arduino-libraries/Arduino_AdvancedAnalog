@@ -115,7 +115,7 @@ DMABuffer<Sample> &AdvancedADC::read() {
     return NULLBUF;
 }
 
-int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers,bool do_start,uint8_t adcNum) {
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, bool do_start, uint8_t adcNum) {
     
     ADCName instance = ADC_NP;
     // Sanity checks.
@@ -124,8 +124,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     //if ADC specified is more than the number of available ADC bail out
-    if(adcNum>AN_ARRAY_SIZE(adc_pin_alt))
-    {
+    if(adcNum>AN_ARRAY_SIZE(adc_pin_alt)) {
         descr = nullptr;
         return 0;
     }
@@ -137,8 +136,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     
 
     // If ADC not specified find an ADC that can be used with these set of pins/channels.
-    if(adcNum==0)
-    {
+    if(adcNum==0) {
         for (size_t i=0; instance == ADC_NP && i<AN_ARRAY_SIZE(adc_pin_alt); i++) {
             // Calculate alternate function pin.
             PinName pin = (PinName) (adc_pins[0] | adc_pin_alt[i]); // First pin decides the ADC.
@@ -162,8 +160,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
             }
         }
     }
-    else if(adcNum>0)  //if ADC specified use that ADC to try to map first channel
-    {
+    else if(adcNum>0) { //if ADC specified use that ADC to try to map first channel
         PinName pin = (PinName) (adc_pins[0] | adc_pin_alt[adcNum-1]); 
 
         // Check if pin is mapped.
@@ -192,8 +189,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     pinmap_pinout(adc_pins[0], PinMap_ADC);
     
     //If ADC was not specified ensure the remaining channels are mappable to same ADC
-    if(adcNum==0)
-    {
+    if(adcNum==0) {
         uint8_t ch_init = 1;
         for (size_t i=1; i<n_channels; i++) {
             for (size_t j=0; j<AN_ARRAY_SIZE(adc_pin_alt); j++) {
@@ -273,16 +269,14 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     hal_dma_enable_dbm(&descr->dma, descr->dmabuf[0]->data(), descr->dmabuf[1]->data());
     HAL_NVIC_EnableIRQ(descr->dma_irqn);
 
-    if(do_start)
-    {
+    if(do_start){
         return(start(sample_rate));
     }
 
     return 1;
 }
 
-int AdvancedADC::start(uint32_t sample_rate)
-{
+int AdvancedADC::start(uint32_t sample_rate){
     // Init, config and start the ADC timer.
     hal_tim_config(&descr->tim, sample_rate);
     
@@ -294,24 +288,22 @@ int AdvancedADC::start(uint32_t sample_rate)
     return 1;
 }
 
-int AdvancedADC::stop()
-{
+int AdvancedADC::stop(){
+
     dac_descr_deinit(descr, true);
+
     return 1;
 }
 
-void AdvancedADC::clear()
-{
+void AdvancedADC::clear() {
     descr->pool->flush();
 }
 
-AdvancedADC::~AdvancedADC()
-{
+AdvancedADC::~AdvancedADC(){
     dac_descr_deinit(descr, true);
 }
 
-int AdvancedADCDual::begin(AdvancedADC *in1, AdvancedADC *in2,uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers)
-{
+int AdvancedADCDual::begin(AdvancedADC *in1, AdvancedADC *in2, uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers){
 	adcIN1=in1;
 	adcIN2=in2;
 	
@@ -343,8 +335,7 @@ int AdvancedADCDual::begin(AdvancedADC *in1, AdvancedADC *in2,uint32_t resolutio
 	
 }
 
-int AdvancedADCDual:: stop()
-{
+int AdvancedADCDual:: stop(){
 	if(adcIN1!=nullptr)
 	{
 		adcIN1->stop();
@@ -356,11 +347,9 @@ int AdvancedADCDual:: stop()
     //Always disable dual mode when stopped
 	int result=hal_disable_dual_mode();
     return(1);
-	
 }
 
-AdvancedADCDual::~AdvancedADCDual()
-{
+AdvancedADCDual::~AdvancedADCDual(){
     int result=stop();
 }
 
