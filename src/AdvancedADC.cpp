@@ -115,7 +115,12 @@ DMABuffer<Sample> &AdvancedADC::read() {
     return NULLBUF;
 }
 
-int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, bool do_start, uint8_t adcNum) {
+int AdvancedADC::getAssignedADC()
+{
+    return(selected_adc);
+}
+
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, bool do_start) {
     
     ADCName instance = ADC_NP;
     // Sanity checks.
@@ -123,12 +128,6 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
         return 0;
     }
 
-    //if ADC specified is more than the number of available ADC bail out
-    if(adcNum>AN_ARRAY_SIZE(adc_pin_alt)) {
-        descr = nullptr;
-        return 0;
-    }
-  
     // Clear ALTx pin.
     for (size_t i=0; i<n_channels; i++) {
         adc_pins[i] =  (PinName) (adc_pins[i] & ~(ADC_PIN_ALT_MASK));
@@ -136,47 +135,28 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     
 
     // If ADC not specified find an ADC that can be used with these set of pins/channels.
-    if(adcNum==0) {
-        for (size_t i=0; instance == ADC_NP && i<AN_ARRAY_SIZE(adc_pin_alt); i++) {
-            // Calculate alternate function pin.
-            PinName pin = (PinName) (adc_pins[0] | adc_pin_alt[i]); // First pin decides the ADC.
-
-            // Check if pin is mapped.
-            if (pinmap_find_peripheral(pin, PinMap_ADC) == NC) {
-                break;
-            }
-
-            // Find the first free ADC according to the available ADCs on pin.
-            for (size_t j=0; instance == ADC_NP && j<AN_ARRAY_SIZE(adc_descr_all); j++) {
-                descr = &adc_descr_all[j];
-                if (descr->pool == nullptr) {
-                    ADCName tmp_instance = (ADCName) pinmap_peripheral(pin, PinMap_ADC);
-                    if (descr->adc.Instance == ((ADC_TypeDef*) tmp_instance)) {
-                        instance = tmp_instance;
-                        adc_pins[0] = pin;
-                        selectedADC=j;
-                    }
-                }
-            }
-        }
-    }
-    else if(adcNum>0) { //if ADC specified use that ADC to try to map first channel
-        PinName pin = (PinName) (adc_pins[0] | adc_pin_alt[adcNum-1]); 
+    
+    for (size_t i=0; instance == ADC_NP && i<AN_ARRAY_SIZE(adc_pin_alt); i++) {
+        // Calculate alternate function pin.
+        PinName pin = (PinName) (adc_pins[0] | adc_pin_alt[i]); // First pin decides the ADC.
 
         // Check if pin is mapped.
         if (pinmap_find_peripheral(pin, PinMap_ADC) == NC) {
-            return 0;
+            break;
         }
-   
-        descr = &adc_descr_all[adcNum-1];
-        if (descr->pool == nullptr) {
-            ADCName tmp_instance = (ADCName) pinmap_peripheral(pin, PinMap_ADC);
-            if (descr->adc.Instance == ((ADC_TypeDef*) tmp_instance)) {
-                instance = tmp_instance;
-                adc_pins[0] = pin;
+
+        // Find the first free ADC according to the available ADCs on pin.
+        for (size_t j=0; instance == ADC_NP && j<AN_ARRAY_SIZE(adc_descr_all); j++) {
+            descr = &adc_descr_all[j];
+            if (descr->pool == nullptr) {
+                ADCName tmp_instance = (ADCName) pinmap_peripheral(pin, PinMap_ADC);
+                if (descr->adc.Instance == ((ADC_TypeDef*) tmp_instance)) {
+                    instance = tmp_instance;
+                    adc_pins[0] = pin;
+                    selected_adc=j+1;
+                }
             }
         }
-        selectedADC=adcNum; //Store selected number
     }
     
     if (instance == ADC_NP) {
@@ -189,37 +169,11 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     pinmap_pinout(adc_pins[0], PinMap_ADC);
     
     //If ADC was not specified ensure the remaining channels are mappable to same ADC
-    if(adcNum==0) {
-        uint8_t ch_init = 1;
-        for (size_t i=1; i<n_channels; i++) {
-            for (size_t j=0; j<AN_ARRAY_SIZE(adc_pin_alt); j++) {
-                // Calculate alternate function pin.
-                PinName pin = (PinName) (adc_pins[i] | adc_pin_alt[j]);
-                // Check if pin is mapped.
-                if (pinmap_find_peripheral(pin, PinMap_ADC) == NC) {
-                    break;
-                }
-                // Check if pin is connected to the selected ADC.
-                if (instance == pinmap_peripheral(pin, PinMap_ADC)) {
-                    pinmap_pinout(pin, PinMap_ADC);
-                    adc_pins[i] = pin;
-                    ch_init++;
-                    break;
-                }
-            }
-        }
-        // All channels must share the same instance; if not, bail out.
-        if (ch_init < n_channels) {
-            return 0;
-        }
-    }
-    else if(adcNum>0)  //If specific ADC was requested ensure all other channels map to that same ADC
-    {
-        uint8_t ch_init = 1;
-        for (size_t i=1; i<n_channels; i++) {
-            
+    uint8_t ch_init = 1;
+    for (size_t i=1; i<n_channels; i++) {
+        for (size_t j=0; j<AN_ARRAY_SIZE(adc_pin_alt); j++) {
             // Calculate alternate function pin.
-            PinName pin = (PinName) (adc_pins[i] | adc_pin_alt[adcNum-1]);
+            PinName pin = (PinName) (adc_pins[i] | adc_pin_alt[j]);
             // Check if pin is mapped.
             if (pinmap_find_peripheral(pin, PinMap_ADC) == NC) {
                 break;
@@ -229,14 +183,14 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
                 pinmap_pinout(pin, PinMap_ADC);
                 adc_pins[i] = pin;
                 ch_init++;
+                break;
             }
         }
-        // All channels must share the same instance; if not, bail out.
-        if (ch_init < n_channels) {
-            return 0;
-        }
     }
-    
+    // All channels must share the same instance; if not, bail out.
+    if (ch_init < n_channels) {
+        return 0;
+    }
     
     // Allocate DMA buffer pool.
     descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
@@ -310,15 +264,17 @@ int AdvancedADCDual::begin(AdvancedADC *in1, AdvancedADC *in2, uint32_t resoluti
 	int result=0;
 	
 	//Configure first pin on ADC1
-	result=adcIN1->begin(resolution,sample_rate,n_samples,n_buffers,1,&(adc_pins_unmapped[0]),false,1);
-	if(result!=1)
+	result=adcIN1->begin(resolution,sample_rate,n_samples,n_buffers,1,&(adc_pins_unmapped[0]),false);
+	if(result!=1 || adcIN1->getAssignedADC()!=1)
 	{
+        Serial.println("First ADC Assigned: "+String(adcIN1->getAssignedADC()));
 		return(0);
 	}
 	//Configure all other pins on ADC2
-	result=adcIN2->begin(resolution,sample_rate,n_samples,n_buffers,n_channels-1,&(adc_pins_unmapped[1]),false,2);
-	if(result!=1)
+	result=adcIN2->begin(resolution,sample_rate,n_samples,n_buffers,n_channels-1,&(adc_pins_unmapped[1]),false);
+	if(result!=1 || adcIN2->getAssignedADC()!=2)
 	{
+        Serial.println("Second ADC Assigned: "+String(adcIN1->getAssignedADC()));
 		return(0);
 	}
 	
