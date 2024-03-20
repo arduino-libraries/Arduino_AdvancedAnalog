@@ -164,7 +164,10 @@ int hal_dac_config(DAC_HandleTypeDef *dac, uint32_t channel, uint32_t trigger) {
 }
 
 static uint32_t ADC_RANK_LUT[] = {
-    ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4, ADC_REGULAR_RANK_5
+    ADC_REGULAR_RANK_1, ADC_REGULAR_RANK_2, ADC_REGULAR_RANK_3, ADC_REGULAR_RANK_4,
+    ADC_REGULAR_RANK_5, ADC_REGULAR_RANK_6, ADC_REGULAR_RANK_7, ADC_REGULAR_RANK_8,
+    ADC_REGULAR_RANK_9, ADC_REGULAR_RANK_10, ADC_REGULAR_RANK_11, ADC_REGULAR_RANK_12,
+    ADC_REGULAR_RANK_13, ADC_REGULAR_RANK_14, ADC_REGULAR_RANK_15, ADC_REGULAR_RANK_16
 };
 
 int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels) {
@@ -196,7 +199,7 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
     adc->Init.ExternalTrigConvEdge     = ADC_EXTERNALTRIGCONVEDGE_RISING;
     adc->Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
 
-    if (HAL_ADC_Init(adc) != HAL_OK 
+    if (HAL_ADC_Init(adc) != HAL_OK
         || HAL_ADCEx_Calibration_Start(adc, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED) != HAL_OK) {
             return -1;
     }

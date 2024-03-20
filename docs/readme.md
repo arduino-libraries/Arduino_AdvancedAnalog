@@ -56,7 +56,7 @@ void loop() {
 
 #### ADC Multichannel (GIGA R1 WiFi)
 This library supports concurrent usage of up to **three** ADCs (_ADC1_, _ADC2_ and _ADC3_).
-Each ADC instance can handle up to **five** channels.
+Each ADC instance can handle up to **16** channels.
 
 **Note:** It's important to be aware that certain pins cannot be used across multiple ADCs or cannot share the same ADC.
 

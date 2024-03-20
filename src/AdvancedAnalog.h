@@ -35,7 +35,7 @@ enum {
 typedef uint16_t                Sample;     // Sample type used for ADC/DAC.
 typedef DMABuffer<Sample>       &SampleBuffer;
 
-#define AN_MAX_ADC_CHANNELS     (5)
+#define AN_MAX_ADC_CHANNELS     (16)
 #define AN_MAX_DAC_CHANNELS     (1)
 #define AN_ARRAY_SIZE(a)        (sizeof(a) / sizeof(a[0]))
 
