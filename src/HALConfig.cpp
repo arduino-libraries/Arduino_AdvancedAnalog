@@ -223,6 +223,15 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
     return 0;
 }
 
+int hal_adc_enable_dual_mode(bool enable) {
+    if (enable) {
+        LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_DUAL_REG_SIMULT);
+    } else {
+        LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_MULTI_INDEPENDENT);
+    }
+    return 0;
+}
+
 int hal_i2s_config(I2S_HandleTypeDef *i2s, uint32_t sample_rate, uint32_t mode, bool mck_enable) {
     // Set I2S clock source.
     RCC_PeriphCLKInitTypeDef pclk_init = {0};

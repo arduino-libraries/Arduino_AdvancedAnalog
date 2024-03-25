@@ -30,6 +30,7 @@ void hal_dma_enable_dbm(DMA_HandleTypeDef *dma, void *m0 = nullptr, void *m1 = n
 void hal_dma_update_memory(DMA_HandleTypeDef *dma, void *addr);
 int hal_dac_config(DAC_HandleTypeDef *dac, uint32_t channel, uint32_t trigger);
 int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels);
+int hal_adc_enable_dual_mode(bool enable);
 int hal_i2s_config(I2S_HandleTypeDef *i2s, uint32_t sample_rate, uint32_t mode, bool mck_enable);
 
 #endif  // __HAL_CONFIG_H__
