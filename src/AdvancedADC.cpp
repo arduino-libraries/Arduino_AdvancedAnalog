@@ -129,7 +129,8 @@ DMABuffer<Sample> &AdvancedADC::read() {
     return NULLBUF;
 }
 
-int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers, bool start) {
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                       size_t n_buffers, bool start, adc_sample_time_t sample_time) {
     
     ADCName instance = ADC_NP;
     // Sanity checks.
@@ -214,7 +215,7 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // Init and config ADC.
-    if (hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins, n_channels) < 0) {
+    if (hal_adc_config(&descr->adc, ADC_RES_LUT[resolution], descr->tim_trig, adc_pins, n_channels, sample_time) < 0) {
         return 0;
     }
 
@@ -268,18 +269,19 @@ AdvancedADC::~AdvancedADC() {
     dac_descr_deinit(descr, true);
 }
 
-int AdvancedADCDual::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers) {
+int AdvancedADCDual::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                           size_t n_buffers, adc_sample_time_t sample_time) {
     // The two ADCs must have the same number of channels.
     if (adc1.channels() != adc2.channels()) {
         return 0;
     }
 
     // Configure the ADCs.
-    if (!adc1.begin(resolution, sample_rate, n_samples, n_buffers, false)) {
+    if (!adc1.begin(resolution, sample_rate, n_samples, n_buffers, false, sample_time)) {
         return 0;
     }
 
-    if (!adc2.begin(resolution, sample_rate, n_samples, n_buffers, false)) {
+    if (!adc2.begin(resolution, sample_rate, n_samples, n_buffers, false, sample_time)) {
         adc1.stop();
         return 0;
     }
