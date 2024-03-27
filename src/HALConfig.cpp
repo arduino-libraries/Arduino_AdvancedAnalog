@@ -170,7 +170,8 @@ static uint32_t ADC_RANK_LUT[] = {
     ADC_REGULAR_RANK_13, ADC_REGULAR_RANK_14, ADC_REGULAR_RANK_15, ADC_REGULAR_RANK_16
 };
 
-int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger, PinName *adc_pins, uint32_t n_channels) {
+int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger,
+                   PinName *adc_pins, uint32_t n_channels, uint32_t sample_time) {
     // Set ADC clock source.
     __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_CLKP);
 
@@ -208,7 +209,7 @@ int hal_adc_config(ADC_HandleTypeDef *adc, uint32_t resolution, uint32_t trigger
     sConfig.Offset       = 0;
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
     sConfig.SingleDiff   = ADC_SINGLE_ENDED;
-    sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
+    sConfig.SamplingTime = sample_time;
 
     for (size_t rank=0; rank<n_channels; rank++) {
         uint32_t function = pinmap_function(adc_pins[rank], PinMap_ADC);

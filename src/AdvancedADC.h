@@ -26,6 +26,17 @@
 
 struct adc_descr_t;
 
+typedef enum {
+    AN_ADC_SAMPLETIME_1_5 = ADC_SAMPLETIME_1CYCLE_5,
+    AN_ADC_SAMPLETIME_2_5 = ADC_SAMPLETIME_2CYCLES_5,
+    AN_ADC_SAMPLETIME_8_5 = ADC_SAMPLETIME_8CYCLES_5,
+    AN_ADC_SAMPLETIME_16_5 = ADC_SAMPLETIME_16CYCLES_5,
+    AN_ADC_SAMPLETIME_32_5 = ADC_SAMPLETIME_32CYCLES_5,
+    AN_ADC_SAMPLETIME_64_5 = ADC_SAMPLETIME_64CYCLES_5,
+    AN_ADC_SAMPLETIME_387_5 = ADC_SAMPLETIME_387CYCLES_5,
+    AN_ADC_SAMPLETIME_810_5 = ADC_SAMPLETIME_810CYCLES_5,
+} adc_sample_time_t;
+
 class AdvancedADC {
     private:
         size_t n_channels;
@@ -49,9 +60,10 @@ class AdvancedADC {
         bool available();
         SampleBuffer read();
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
-                size_t n_buffers, bool start=true);
+                  size_t n_buffers, bool start=true, adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5);
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
-                size_t n_buffers, size_t n_pins, pin_size_t *pins, bool start=true) {
+                  size_t n_buffers, size_t n_pins, pin_size_t *pins, bool start=true,
+                  adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5) {
             if (n_pins > AN_MAX_ADC_CHANNELS) {
                 n_pins = AN_MAX_ADC_CHANNELS;
             }
@@ -60,7 +72,7 @@ class AdvancedADC {
             }
 
             n_channels = n_pins;
-            return begin(resolution, sample_rate, n_samples, n_buffers, start);
+            return begin(resolution, sample_rate, n_samples, n_buffers, start, sample_time);
         }
         int start(uint32_t sample_rate);
         int stop();
@@ -79,7 +91,8 @@ class AdvancedADCDual {
             n_channels(0), adc1(adc1_in), adc2(adc2_in) {
         }
         ~AdvancedADCDual();
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples, size_t n_buffers);
+        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                  size_t n_buffers, adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5);
         int stop();
 };
 
