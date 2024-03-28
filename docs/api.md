@@ -23,9 +23,7 @@ Nothing.
 ### `begin()`
 
 
-Initializes the ADC with the specific parameters. The `begin()` method is firstly used to initialize the library.
-
-If reconfigured during program execution, use `stop()` first.
+Initializes the ADC with the specified parameters. If reconfiguration is needed during program execution, `stop()` should be called first.
 
 #### Syntax
 
@@ -35,15 +33,25 @@ adc0.begin(resolution, sample_rate, n_samples, n_buffers)
 
 #### Parameters
 
-- `enum` - analog read resolution (choose from 8, 10, 12, 14, 16 bit).
+- `enum` - **resolution** the ADC resolution (can be 8, 10, 12, 14 or 16 bit).
   - `AN_RESOLUTION_8`
   - `AN_RESOLUTION_10`
   - `AN_RESOLUTION_12`
   - `AN_RESOLUTION_14`
   - `AN_RESOLUTION_16`
 - `int` - **sample_rate** - the sample rate / frequency in Hertz, e.g. `16000`.
-- `int` - **n_samples** - number of samples we want to acquire, e.g. `32`. When reading the ADC, we store these samples into a specific buffer (see [SampleBuffer](#samplebuffer)), and read them via `buffer[x]`, where `x` is the sample you want to retrieve.
+- `int` - **n_samples** - number of samples per buffer, e.g. `32`. When reading the ADC, we store these samples into a specific buffer (see [SampleBuffer](#samplebuffer)), and read them via `buffer[x]`, where `x` is the sample you want to retrieve.
 - `int` - **n_buffers** - the number of buffers in the queue.
+- `bool` - **start** - if true, the ADC will start sampling immediately (the default is true).
+- `enum` - **sample_time** - the ADC sampling time in cycles (the default is 8.5 cycles).
+  - `AN_ADC_SAMPLETIME_1_5`
+  - `AN_ADC_SAMPLETIME_2_5`
+  - `AN_ADC_SAMPLETIME_8_5`
+  - `AN_ADC_SAMPLETIME_16_5`
+  - `AN_ADC_SAMPLETIME_32_5`
+  - `AN_ADC_SAMPLETIME_64_5`
+  - `AN_ADC_SAMPLETIME_387_5`
+  - `AN_ADC_SAMPLETIME_810_5`
 
 #### Returns
 
@@ -73,7 +81,7 @@ Reads the first available byte in the buffer.
 
 ### `stop()`
 
-Stops the ADC and buffer transfer, and releases any memory allocated for the buffer array.
+Stops the ADC and releases all of its resources.
 
 #### Syntax
 
@@ -84,6 +92,67 @@ adc.stop()
 #### Returns
 
 - `1`
+
+## AdvancedADCDual
+
+### `AdvancedADCDual`
+
+The AdvancedADCDual class enables the configuration of two ADCs in Dual ADC mode. In this mode, the two ADCs are synchronized, with one ADC acting as the master ADC and controlling the other. Note: This mode is only supported on ADC1 and ADC2, and they must be passed in that order.
+
+#### Syntax
+
+```
+AdvancedADCDual adc_dual(adc1, adc2);
+```
+
+#### Parameters
+
+- `AdvancedADC` - **adc1** - the first ADC. Note this must be ADC1.
+- `AdvancedADC` - **adc2** - the second ADC. Note this must be ADC2.
+
+#### Returns
+
+Nothing.
+
+### `begin()`
+
+Initialize and start the two ADCs with the specified parameters.
+
+#### Syntax
+
+```
+adc_dual.begin(resolution, sample_rate, n_samples, n_buffers)
+```
+
+#### Parameters
+
+- `enum` - **resolution** the ADC resolution (can be 8, 10, 12, 14 or 16 bit).
+  - `AN_RESOLUTION_8`
+  - `AN_RESOLUTION_10`
+  - `AN_RESOLUTION_12`
+  - `AN_RESOLUTION_14`
+  - `AN_RESOLUTION_16`
+- `int` - **sample_rate** - the sample rate / frequency in Hertz, e.g. `16000`.
+- `int` - **n_samples** - number of samples per buffer, e.g. `32`. When reading the ADC, we store these samples into a specific buffer (see [SampleBuffer](#samplebuffer)), and read them via `buffer[x]`, where `x` is the sample you want to retrieve.
+- `int` - **n_buffers** - the number of buffers in the queue.
+- `bool` - **start** - if true, the ADC will start sampling immediately (the default is true).
+- `enum` - **sample_time** - the ADC sampling time in cycles (the default is 8.5 cycles).
+  - `AN_ADC_SAMPLETIME_1_5`
+  - `AN_ADC_SAMPLETIME_2_5`
+  - `AN_ADC_SAMPLETIME_8_5`
+  - `AN_ADC_SAMPLETIME_16_5`
+  - `AN_ADC_SAMPLETIME_32_5`
+  - `AN_ADC_SAMPLETIME_64_5`
+  - `AN_ADC_SAMPLETIME_387_5`
+  - `AN_ADC_SAMPLETIME_810_5`
+
+#### Returns
+
+1 on success, 0 on failure.
+
+### `stop()`
+
+Stops the two ADCs and releases all of their resources.
 
 ## AdvancedDAC
 
@@ -109,10 +178,7 @@ Nothing.
 
 ### `begin()`
 
-
-Initializes the DAC with the specific parameters. The `begin()` method is firstly used to initialize the library.
-
-If reconfigured during program execution, use `stop()` first.
+Initializes the DAC with the specified parameters. If reconfiguration is needed during program execution, `stop()` should be called first.
 
 #### Syntax
 
@@ -127,7 +193,7 @@ dac0.begin(resolution, frequency, n_samples, n_buffers)
   - `AN_RESOLUTION_10`
   - `AN_RESOLUTION_12`
 - `int` - **frequency** - the frequency in Hertz, e.g. `8000`.
-- `int` - **n_samples** - number of samples we want to write, e.g. `32`. When writing to the DAC, we first write the samples into a buffer (see [SampleBuffer](#samplebuffer)), and write it to the DAC using `dac_out.write(buf)`.
+- `int` - **n_samples** - number of samples per buffer, e.g. `32`. When writing to the DAC, we first write the samples into a buffer (see [SampleBuffer](#samplebuffer)), and write it to the DAC using `dac_out.write(buf)`.
 - `int` - **n_buffers** - the number of buffers in the queue.
 
 
@@ -188,7 +254,7 @@ dac1.write(buf);
 
 ### `stop()`
 
-Stops the DAC timer and buffer transfer, and releases any memory allocated for the buffer array.
+Stops the DAC and releases all of its resources.
 
 #### Syntax
 
@@ -216,7 +282,170 @@ dac.frequency(frequency);
 
 - `int` - frequency in Hertz (Hz).
 
+## AdvancedI2S
 
+### `AdvancedI2S`
+
+Creates an I2S object using the provided pins.
+
+#### Syntax
+
+```
+AdvancedI2S i2s(WS, CK, SDI, SDO, MCK);
+```
+
+#### Parameters
+
+- `WS` I2S word select (LR clock).
+- `CK` I2S bit-clock (BRCLK clock).
+- `SDI` I2S data input (can be `NC` in half-duplex output mode).
+- `SDO` I2S data output (can be `NC` in half-duplex input mode).
+- `MCK` Master clock (can be `NC` if no MCLK is required).
+
+#### Returns
+
+Nothing.
+
+### `begin()`
+
+Initialize and start the I2S device.
+
+#### Syntax
+
+```
+i2s.begin(mode, resolution, frequency, n_samples, n_buffers)
+```
+
+#### Parameters
+
+- `enum` - **mode** - The I2S mode.
+  - `AN_I2S_MODE_IN`
+  - `AN_I2S_MODE_OUT`
+  - `AN_I2S_MODE_INOUT`
+- `int` - **sample_rate** - The sample rate / frequency in Hertz, e.g. `16000`.
+- `int` - **n_samples** - The number of samples per buffer (i.e, buffer width).
+- `int` - **n_buffers** - The number of buffers in the sample queue (i.e, queue depth).
+
+#### Returns
+
+1 on success, 0 on failure.
+
+### `available()`
+
+Checks if the I2S is readable, writable or both (in full-duplex mode).
+
+#### Syntax
+
+```
+if(i2s.available()){}
+```
+
+#### Parameters
+
+None.
+
+#### Returns
+
+True if I2S is readable, writable or both (in full-duplex mode), false if not.
+
+### `read()`
+
+Returns a sample buffer from the queue for reading. This function can be called in half-duplex input or full-duplex modes. When the code is done with the buffer, it should be returned to I2S by calling `release()` (see [SampleBuffer](#release))
+
+#### Syntax
+
+```
+SampleBuffer buf = i2s.read();
+
+for (size_t i=0; i<buf.size(); i++) {
+     Serial.println(buf[i]);
+}
+
+i2s.release(buf);
+```
+
+### `dequeue()`
+
+Returns a sample buffer from the queue for writing. This function can be called in half-duplex output or full-duplex modes. When the code is done with the buffer, it should be written out to I2S by calling `write()` (see [I2S](#write))
+
+#### Syntax
+
+```
+SampleBuffer buf = dac.dequeue();
+
+for (size_t i=0; i<buf.size(); i++) {
+     buf[i] =  SAMPLES_BUFFER[i];
+}
+
+dac1.write(buf);
+```
+
+### `write()`
+
+Writes the buffer to I2S.
+
+#### Syntax
+
+```
+i2s.write(buf);
+```
+
+#### Parameters
+
+- A buffer containing the samples (see [SampleBuffer](#samplebuffer)).
+
+### `stop()`
+
+Stops the I2S and releases all of its resources.
+
+#### Syntax
+
+```
+i2s.stop()
+```
+
+#### Returns
+
+- `1`
+
+## WavReader
+
+### `WavReader`
+
+Creates a WAV file reader.
+
+### `begin()`
+
+Initializes the WAV reader, opens the file and reads the WAV file header.
+
+#### Syntax
+
+```
+wav.begin(path, n_samples, n_buffers, loop)
+```
+
+#### Parameters
+
+- `string` - **path** - the path to the WAV file.
+- `int` - **n_samples** - the number of samples per buffer.
+- `int` - **n_buffers** - the number of buffers in the queue.
+- `bool` - **loop* - if true, the WAV reader will loop back to the start of the file, when the end file is reached.
+
+### `stop()`
+
+Stops the WAV file and releases all of its resources (include the WAV file handle).
+
+### `available()`
+
+Returns true if the WAV file has more data to be read.
+
+### `read()`
+
+Returns a sample buffer from the queue for reading.
+
+### `rewind()`
+
+If `loop` is false, this functions restarts the file read position.
 
 ## SampleBuffer
 
@@ -244,7 +473,7 @@ dac1.write(buf);
 
 ### `data()`
 
-Returns a pointer to the buffer's memory. 
+Returns a pointer to the buffer's memory.
 
 ```
 buf.data()
@@ -325,7 +554,7 @@ buf.release()
 
 ### `setflags()`
 
-Sets flag(s) for the buffer. 
+Sets flag(s) for the buffer.
 
 ```
 buf.setflags(int arg)
@@ -373,7 +602,7 @@ buf.readable()
 
 ### `allocate()`
 
-Used to obtain a buffer from the free queue. 
+Used to obtain a buffer from the free queue.
 
 ```
 buf.allocate()

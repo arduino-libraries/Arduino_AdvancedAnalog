@@ -1,18 +1,21 @@
-# Arduino_AdvancedAnalog library
+# Arduino Advanced Analog Library
 
 [![License](https://img.shields.io/badge/License-LGPLv2.1-blue.svg)](../LICENSE)
 
-The **Arduino_AdvancedAnalog** library is designed to offer high performance DAC/ADC applications on boards based on the STM32H747XI microcontroller:
+The Arduino Advanced Analog library enables high performance DAC, ADC and I2S applications on boards based on the STM32H7 microcontrollers:
 - [Arduino GIGA R1 WiFi](https://store.arduino.cc/products/giga-r1-wifi)
 - [Arduino Portenta H7](https://store.arduino.cc/products/portenta-h7)
 
 ## Features
 
-- ADC/DAC parameters fine tuning: resolution, channel number, queue number and size
-- ADC acquisition with DMA in double buffering mode
-- ADC Multichannel acquisition
-- DAC Multichannel writing 
-- Storing ADC samples history in multiple queues
+- Efficient memory management using DMA buffer pools.
+- Configurable sample rate, sampling time, resolution, and number of channels.
+- Samples are stored in dynamically configurable queues.
+- ADC multi-channel acquisition and dual mode support.
+- I2S input, output, and full-duplex mode support.
+- All drivers utilize DMA in double buffer mode.
+- A WAV file reader that supports loop mode.
+
 ## Guides
 
 To learn more about using the DAC & ADC on the GIGA R1 WiFi, check out the [GIGA Advanced DAC/ADC Guide](https://docs.arduino.cc/tutorials/giga-r1-wifi/giga-audio).
@@ -160,9 +163,38 @@ void loop() {
 }
 ```
 
+### I2S
+
+To use this library for I2S application, you must have a supported Arduino board and include the AdvancedAnalog library in your Arduino sketch. Here is a minimal example for the Arduino GIGA R1 WiFi:
+
+```cpp
+#include <Arduino_AdvancedAnalog.h>
+
+// WS, CK, SDI, SDO, MCK
+AdvancedI2S i2s(PG_10, PG_11, PG_9, PB_5, PC_4);
+
+void setup() {
+    Serial.begin(9600);
+
+    // Resolution, sample rate, number of samples per channel, queue depth.
+    if (!i2s.begin(AN_I2S_MODE_IN, 32000, 512, 32)) {
+        Serial.println("Failed to start I2S");
+        while (1);
+    }
+}
+
+void loop() {
+    if (i2s.available()) {
+      SampleBuffer buf = i2s.read();
+      // process samples.
+      buf.release();
+    }
+}
+```
+
 ## Examples
-- **[Advanced](../examples/Advanced):** This folder contains examples showing how to configure ADC/DAC to read/write data.
-- **[Beginner](../examples/Beginner):** This folder contains examples showing how to generate waveforms with DAC.
+- **[Beginner](../examples/Beginner):** This folder contains full applications, like audio playback and a waveform generator.
+- **[Advanced](../examples/Advanced):** This folder contains more specific examples showing advanced API configurations.
 
 ## API
 
