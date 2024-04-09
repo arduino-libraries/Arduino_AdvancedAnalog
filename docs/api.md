@@ -20,7 +20,7 @@ AdvancedADC adc(analogPin);
 
 `void`.
 
-### `begin()`
+### `AdvancedADC.begin()`
 
 Initializes and configures the ADC with the specified parameters. To reconfigure the ADC, `stop()` must be called first.
 
@@ -56,7 +56,7 @@ adc0.begin(resolution, sample_rate, n_samples, n_buffers)
 
 1 on success, 0 on failure.
 
-### `available()`
+### `AdvancedADC.available()`
 
 Checks if the ADC is readable.
 
@@ -74,11 +74,11 @@ None.
 
 Returns true, if there's at least one sample buffer in the read queue, otherwise returns false.
 
-### `read()`
+### `AdvancedADC.read()`
 
 Returns a sample buffer from the queue for reading.
 
-### `start()`
+### `AdvancedADC.start()`
 
 Starts the ADC sampling.
 
@@ -92,7 +92,7 @@ adc.start()
 
 1 on success, 0 on failure.
 
-### `stop()`
+### `AdvancedADC.stop()`
 
 Stops the ADC and releases all of its resources.
 
@@ -127,7 +127,7 @@ AdvancedADCDual adc_dual(adc1, adc2);
 
 `void`.
 
-### `begin()`
+### `AdvancedADCDual.begin()`
 
 Initializes and starts the two ADCs with the specified parameters.
 
@@ -162,7 +162,7 @@ adc_dual.begin(resolution, sample_rate, n_samples, n_buffers)
 
 1 on success, 0 on failure.
 
-### `stop()`
+### `AdvancedADCDual.stop()`
 
 Stops the dual ADCs and releases all resources.
 
@@ -187,7 +187,7 @@ AdvancedDAC dac1(A13);
 
 `void`.
 
-### `begin()`
+### `AdvancedDAC.begin()`
 
 Initializes the DAC with the specified parameters. To reconfigure the DAC, `stop()` must be called first.
 
@@ -211,7 +211,7 @@ dac.begin(resolution, frequency, n_samples, n_buffers)
 
 1 on success, 0 on failure.
 
-### `available()`
+### `AdvancedDAC.available()`
 
 Checks if the DAC is writable.
 
@@ -229,7 +229,7 @@ None.
 
 Returns true, if there's at least one free sample buffer in the write queue, otherwise returns false.
 
-### `dequeue()`
+### `AdvancedDAC.dequeue()`
 
 Returns a sample buffer from the queue for writing. 
 
@@ -245,7 +245,7 @@ for (size_t i=0; i<buf.size(); i++) {
 dac1.write(buf);
 ```
 
-### `write()`
+### `AdvancedDAC.write()`
 
 Writes the sample buffer back to the DAC.
 
@@ -259,7 +259,7 @@ dac1.write(buf);
 
 - A sample buffer. See [SampleBuffer](#samplebuffer) for more details.
 
-### `stop()`
+### `AdvancedDAC.stop()`
 
 Stops the DAC and releases all of its resources.
 
@@ -273,7 +273,7 @@ dac.stop()
 
 - `1`
 
-### `frequency()`
+### `AdvancedDAC.frequency()`
 
 Sets the DAC's frequency. This function can only be used after `begin()` has been called.
 
@@ -313,7 +313,7 @@ AdvancedI2S i2s(WS, CK, SDI, SDO, MCK);
 
 `void`.
 
-### `begin()`
+### `AdvancedI2S.begin()`
 
 Initializes and starts the I2S device.
 
@@ -337,7 +337,7 @@ i2s.begin(mode, resolution, frequency, n_samples, n_buffers)
 
 1 on success, 0 on failure.
 
-### `available()`
+### `AdvancedI2S.available()`
 
 Checks if the I2S is readable, writable or both (in full-duplex mode).
 
@@ -355,7 +355,7 @@ None.
 
 Returns true if I2S is readable, writable or both (in full-duplex mode), false if not.
 
-### `read()`
+### `AdvancedI2S.read()`
 
 Returns a sample buffer from the queue for reading. This function can be called in half-duplex input or full-duplex modes. When the buffer is no longer needed, it should be returned to I2S by calling `release()`, see [SampleBuffer](#release) for more details.
 
@@ -371,7 +371,7 @@ for (size_t i=0; i<buf.size(); i++) {
 i2s.release(buf);
 ```
 
-### `dequeue()`
+### `AdvancedI2S.dequeue()`
 
 Returns a sample buffer from the queue for writing. This function can be called in half-duplex output or full-duplex modes. When the buffer is done, it can be added to the I2S write queue by calling `write()` (see [I2S](#write))
 
@@ -387,7 +387,7 @@ for (size_t i=0; i<buf.size(); i++) {
 i2s.write(buf);
 ```
 
-### `write()`
+### `AdvancedI2S.write()`
 
 Writes a sample buffer to I2S.
 
@@ -401,7 +401,7 @@ i2s.write(buf);
 
 - A buffer containing the samples (see [SampleBuffer](#samplebuffer)).
 
-### `stop()`
+### `AdvancedI2S.stop()`
 
 Stops the I2S and releases all of its resources.
 
@@ -421,7 +421,7 @@ i2s.stop()
 
 Creates a WAV file reader.
 
-### `begin()`
+### `WavReader.begin()`
 
 Initializes the WAV reader, opens the WAV file and reads the WAV header.
 
@@ -438,25 +438,25 @@ wav.begin(path, n_samples, n_buffers, loop)
 - `int` - **n_buffers** - the number of sample buffers in the queue. See [SampleBuffer](#samplebuffer) for more details.
 - `bool` - **loop* - if true, the WAV reader will loop back to the start of the file, when the end file is reached.
 
-### `stop()`
+### `WavReader.stop()`
 
 Stops the WAV file and releases all of its resources (include the WAV file handle).
 
-### `available()`
+### `WavReader.available()`
 
 Returns true if the WAV file has more data to be read.
 
-### `read()`
+### `WavReader.read()`
 
 Returns a sample buffer from the queue for reading.
 
-### `rewind()`
+### `WavReader.rewind()`
 
 If `loop` is false, this functions restarts the file read position.
 
 ## SampleBuffer
 
-### Sample
+### `Sample`
 
 Represents a single data item in a [`SampleBuffer`](#samplebuffer-1). The `Sample` type is pre-defined by the library as an unsigned short (`uint16_t`) type.
 
@@ -476,7 +476,7 @@ for (size_t i=0; i<buf.size(); i++) {
 dac1.write(buf);
 ```
 
-### `data()`
+### `SampleBuffer.data()`
 
 Returns a pointer to the buffer's internal memory. The buffer's internal memory is contiguous and can be used with memcpy, for example.
 
@@ -484,7 +484,7 @@ Returns a pointer to the buffer's internal memory. The buffer's internal memory 
 buf.data()
 ```
 
-### `size()`
+### `SampleBuffer.size()`
 
 Returns the buffer size in samples (i.e., the number of samples in the buffer).
 
@@ -496,7 +496,7 @@ buf.size()
 
 - The buffer size in samples.
 
-### `bytes()`
+### `SampleBuffer.bytes()`
 
 Returns the buffer size in bytes (i.e., the `number of samples * number of channels * sample size`).
 
@@ -508,7 +508,7 @@ buf.bytes()
 
 - The buffer size in bytes.
 
-### `flush()`
+### `SampleBuffer.flush()`
 
 Flushes any cached data for the buffer.
 
@@ -516,7 +516,7 @@ Flushes any cached data for the buffer.
 buf.flush()
 ```
 
-### `invalidate()`
+### `SampleBuffer.invalidate()`
 
 Invalidats any cached data for the buffer.
 
@@ -524,7 +524,7 @@ Invalidats any cached data for the buffer.
 buf.invalidate()
 ```
 
-### `timestamp()`
+### `SampleBuffer.timestamp()`
 
 Returns the timestamp of the buffer.
 
@@ -536,7 +536,7 @@ buf.timestamp()
 
 - Timestamp as `int`.
 
-### `channels()`
+### `SampleBuffer.channels()`
 
 Returns the number of channels in the buffer.
 
@@ -548,20 +548,7 @@ buf.channels()
 
 - Timestamp as `int`.
 
-
-### `release()`
-
-Releases the buffer back to its memory pool.
-
-```
-buf.release()
-```
-
-#### Returns
-
-`void`.
-
-### `setflags()`
+### `SampleBuffer.setflags()`
 
 This function is used internally by the library to set the buffer's flags. The flags can be one or both of two options: `DMA_BUFFER_DISCONT` set if the capture was stopped and then restarted, and `DMA_BUFFER_INTRLVD` which indicates that the data in the buffer is interleaved.
 
@@ -569,10 +556,9 @@ This function is used internally by the library to set the buffer's flags. The f
 buf.setflags(uint32_t mask)
 ```
 
-### `getflags()`
+### `SampleBuffer.getflags()`
 
 Returns true if any of the buffer flags specified in the mask argument is set. The flags can be one or both of two options: `DMA_BUFFER_DISCONT` set if the capture was stopped and then restarted, and `DMA_BUFFER_INTRLVD` which indicates that the data in the buffer is interleaved.
-
 
 ```
 buf.getflags(uint32_t mask)
@@ -582,7 +568,7 @@ buf.getflags(uint32_t mask)
 
 Returns true if any of the buffer flags specified in the mask argument is set, otherwise returns false.
 
-### `clrflags(uin32_t mask)`
+### `SampleBuffer.clrflags()`
 
 Clears the buffer flags specified in the mask argument.
 
@@ -594,7 +580,7 @@ buf.clrflags(uint32_t mask)
 
 `void`.
 
-### `release()`
+### `SampleBuffer.release()`
 
 Releases the buffer back to its memory pool.
 
