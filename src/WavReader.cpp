@@ -44,7 +44,7 @@ int WavReader::begin(const char *path, size_t n_samples, size_t n_buffers, bool 
     }
 
     // Allocate the DMA buffer pool.
-    pool = new DMABufferPool<Sample>(n_samples, header.num_channels, n_buffers);
+    pool = new DMAPool<Sample>(n_samples, header.num_channels, n_buffers);
     if (pool == nullptr) {
         stop();
         return 0;
@@ -75,7 +75,7 @@ DMABuffer<Sample> &WavReader::read() {
         __WFI();
     }
 
-    DMABuffer<Sample> *buf = pool->allocate();
+    DMABuffer<Sample> *buf = pool->alloc(DMA_BUFFER_WRITE);
     size_t offset = 0;
     Sample *rawbuf = buf->data();
     size_t n_samples = buf->size();
@@ -95,6 +95,8 @@ DMABuffer<Sample> &WavReader::read() {
             }
         }
     }
+    buf->clr_flags();
+    buf->set_flags(DMA_BUFFER_READ);
     return *buf;
 }
 

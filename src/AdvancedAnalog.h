@@ -21,7 +21,7 @@
 #define __ADVANCED_ANALOG_H__
 
 #include "Arduino.h"
-#include "DMABuffer.h"
+#include "api/DMAPool.h"
 #include "pinDefinitions.h"
 
 enum {

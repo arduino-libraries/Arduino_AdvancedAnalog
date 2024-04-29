@@ -30,7 +30,7 @@ struct adc_descr_t {
     IRQn_Type dma_irqn;
     TIM_HandleTypeDef tim;
     uint32_t  tim_trig;
-    DMABufferPool<Sample> *pool;
+    DMAPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
 
@@ -124,7 +124,7 @@ DMABuffer<Sample> &AdvancedADC::read() {
         while (!available()) {
             __WFI();
         }
-        return *descr->pool->dequeue();
+        return *descr->pool->alloc(DMA_BUFFER_READ);
     }
     return NULLBUF;
 }
@@ -200,14 +200,14 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
     }
 
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
+    descr->pool = new DMAPool<Sample>(n_samples, n_channels, n_buffers);
     if (descr->pool == nullptr) {
         return 0;
     }
 
     // Allocate the two DMA buffers used for double buffering.
-    descr->dmabuf[0] = descr->pool->allocate();
-    descr->dmabuf[1] = descr->pool->allocate();
+    descr->dmabuf[0] = descr->pool->alloc(DMA_BUFFER_WRITE);
+    descr->dmabuf[1] = descr->pool->alloc(DMA_BUFFER_WRITE);
 
     // Init and config DMA.
     if (hal_dma_config(&descr->dma, descr->dma_irqn, DMA_PERIPH_TO_MEMORY) < 0) {
@@ -325,19 +325,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc) {
     if (descr->pool->writable()) {
         // Make sure any cached data is discarded.
         descr->dmabuf[ct]->invalidate();
-
         // Move current DMA buffer to ready queue.
-        descr->pool->enqueue(descr->dmabuf[ct]);
-
+        descr->dmabuf[ct]->release();
         // Allocate a new free buffer.
-        descr->dmabuf[ct] = descr->pool->allocate();
-
+        descr->dmabuf[ct] = descr->pool->alloc(DMA_BUFFER_WRITE);
         // Currently, all multi-channel buffers are interleaved.
         if (descr->dmabuf[ct]->channels() > 1) {
-            descr->dmabuf[ct]->setflags(DMA_BUFFER_INTRLVD);
+            descr->dmabuf[ct]->set_flags(DMA_BUFFER_INTRLVD);
         }
     } else {
-        descr->dmabuf[ct]->setflags(DMA_BUFFER_DISCONT);
+        descr->dmabuf[ct]->set_flags(DMA_BUFFER_DISCONT);
     }
 
     // Update the next DMA target pointer.

@@ -30,7 +30,7 @@ struct dac_descr_t {
     uint32_t tim_trig;
     uint32_t resolution;
     uint32_t dmaudr_flag;
-    DMABufferPool<Sample> *pool;
+    DMAPool<Sample> *pool;
     DMABuffer<Sample> *dmabuf[2];
 };
 
@@ -114,7 +114,7 @@ DMABuffer<Sample> &AdvancedDAC::dequeue() {
         while (!available()) {
             __WFI();
         }
-        return *descr->pool->allocate();
+        return *descr->pool->alloc(DMA_BUFFER_WRITE);
     }
     return NULLBUF;
 }
@@ -128,11 +128,11 @@ void AdvancedDAC::write(DMABuffer<Sample> &dmabuf) {
 
     // Make sure any cached data is flushed.
     dmabuf.flush();
-    descr->pool->enqueue(&dmabuf);
+    dmabuf.release();
 
     if (descr->dmabuf[0] == nullptr && (++buf_count % 3) == 0) {
-        descr->dmabuf[0] = descr->pool->dequeue();
-        descr->dmabuf[1] = descr->pool->dequeue();
+        descr->dmabuf[0] = descr->pool->alloc(DMA_BUFFER_READ);
+        descr->dmabuf[1] = descr->pool->alloc(DMA_BUFFER_READ);
 
         // Start DAC DMA.
         HAL_DAC_Start_DMA(descr->dac, descr->channel,
@@ -167,7 +167,7 @@ int AdvancedDAC::begin(uint32_t resolution, uint32_t frequency, size_t n_samples
     }
 
     // Allocate DMA buffer pool.
-    descr->pool = new DMABufferPool<Sample>(n_samples, n_channels, n_buffers);
+    descr->pool = new DMAPool<Sample>(n_samples, n_channels, n_buffers);
     if (descr->pool == nullptr) {
         descr = nullptr;
         return 0;
@@ -226,7 +226,7 @@ void DAC_DMAConvCplt(DMA_HandleTypeDef *dma, uint32_t channel) {
         // NOTE: CT bit is inverted, to get the DMA buffer that's Not currently in use.
         size_t ct = ! hal_dma_get_ct(dma);
         descr->dmabuf[ct]->release();
-        descr->dmabuf[ct] = descr->pool->dequeue();
+        descr->dmabuf[ct] = descr->pool->alloc(DMA_BUFFER_READ);
         hal_dma_update_memory(dma, descr->dmabuf[ct]->data());
     } else {
         dac_descr_deinit(descr, false);
