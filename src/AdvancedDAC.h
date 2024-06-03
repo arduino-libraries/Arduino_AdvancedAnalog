@@ -17,12 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <vector>
-#include "DMABuffer.h"
-#include "AdvancedAnalog.h"
+#ifndef __ADVANCED_DAC_H__
+#define __ADVANCED_DAC_H__
 
-#ifndef ARDUINO_ADVANCED_DAC_H_
-#define ARDUINO_ADVANCED_DAC_H_
+#include "AdvancedAnalog.h"
 
 struct dac_descr_t;
 
@@ -52,4 +50,4 @@ class AdvancedDAC {
         int frequency(uint32_t const frequency);
 };
 
-#endif /* ARDUINO_ADVANCED_DAC_H_ */
+#endif // __ADVANCED_DAC_H__

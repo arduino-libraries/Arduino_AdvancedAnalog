@@ -271,6 +271,7 @@ int hal_i2s_config(I2S_HandleTypeDef *i2s, uint32_t sample_rate, uint32_t mode, 
     i2s->Init.Data24BitAlignment = I2S_DATA_24BIT_ALIGNMENT_RIGHT;
     i2s->Init.MasterKeepIOState = I2S_MASTER_KEEP_IO_STATE_DISABLE;
 
+    HAL_I2S_DeInit(i2s);
     if (HAL_I2S_Init(i2s) != HAL_OK) {
         return -1;
     }

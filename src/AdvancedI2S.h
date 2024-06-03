@@ -16,11 +16,9 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef ARDUINO_ADVANCED_I2S_H
-#define ARDUINO_ADVANCED_I2S_H
+#ifndef __ADVANCED_I2S_H__
+#define __ADVANCED_I2S_H__
 
-#include <vector>
-#include "DMABuffer.h"
 #include "AdvancedAnalog.h"
 
 struct i2s_descr_t;
@@ -55,4 +53,4 @@ class AdvancedI2S {
         int stop();
 };
 
-#endif // ARDUINO_ADVANCED_I2S_H
+#endif // __ADVANCED_I2S_H__

@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "AdvancedAnalog.h"
+#ifndef __ADVANCED_WAV_READER_H__
+#define __ADVANCED_WAV_READER_H__
 
-#ifndef ARDUINO_WAV_READER_H_
-#define ARDUINO_WAV_READER_H_
+#include "AdvancedAnalog.h"
 
 class WavReader {
     typedef struct {
@@ -43,7 +43,7 @@ class WavReader {
         FILE *file;
         bool loop;
         WavHeader header;
-        DMABufferPool<Sample> *pool;
+        DMAPool<Sample> *pool;
 
     public:
         WavReader(): file(nullptr), loop(false), pool(nullptr) {
@@ -71,4 +71,4 @@ class WavReader {
         SampleBuffer read();
         int rewind();
 };
-#endif /* ARDUINO_WAV_READER_H_ */
+#endif // __ADVANCED_WAV_READER_H__

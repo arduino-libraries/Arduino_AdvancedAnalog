@@ -17,12 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <array>
-#include "DMABuffer.h"
-#include "AdvancedAnalog.h"
+#ifndef __ADVANCED_ADC_H__
+#define __ADVANCED_ADC_H__
 
-#ifndef ARDUINO_ADVANCED_ADC_H_
-#define ARDUINO_ADVANCED_ADC_H_
+#include "AdvancedAnalog.h"
 
 struct adc_descr_t;
 
@@ -96,4 +94,4 @@ class AdvancedADCDual {
         int stop();
 };
 
-#endif /* ARDUINO_ADVANCED_ADC_H_ */
+#endif // __ADVANCED_ADC_H__

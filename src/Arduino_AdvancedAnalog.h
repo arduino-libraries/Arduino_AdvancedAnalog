@@ -17,16 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef ADVANCEDANALOGREDUX_ARDUINO_ADVANCEDANALOG_H
-#define ADVANCEDANALOGREDUX_ARDUINO_ADVANCEDANALOG_H
-
-/**************************************************************************************
- * INCLUDE
- **************************************************************************************/
+#ifndef __ARDUINO_ADVANCED_ANALOG_H__
+#define __ARDUINO_ADVANCED_ANALOG_H__
 
 #include "AdvancedADC.h"
 #include "AdvancedDAC.h"
 #include "AdvancedI2S.h"
 #include "WavReader.h"
 
-#endif /* ADVANCEDANALOGREDUX_ARDUINO_ADVANCEDANALOG_H */
+#endif // __ARDUINO_ADVANCED_ANALOG_H__

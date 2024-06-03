@@ -25,11 +25,11 @@ struct i2s_descr_t {
     I2S_HandleTypeDef i2s;
     DMA_HandleTypeDef dmatx;
     IRQn_Type dmatx_irqn;
-    DMABufferPool<Sample> *dmatx_pool;
+    DMAPool<Sample> *dmatx_pool;
     DMABuffer<Sample> *dmatx_buf[2];
     DMA_HandleTypeDef dmarx;
     IRQn_Type dmarx_irqn;
-    DMABufferPool<Sample> *dmarx_pool;
+    DMAPool<Sample> *dmarx_pool;
     DMABuffer<Sample> *dmarx_buf[2];
 };
 
@@ -154,16 +154,16 @@ static int i2s_start_dma_transfer(i2s_descr_t *descr, i2s_mode_t i2s_mode) {
 
     if (i2s_mode & AN_I2S_MODE_IN) {
         // Start I2S DMA.
-        descr->dmarx_buf[0] = descr->dmarx_pool->allocate();
-        descr->dmarx_buf[1] = descr->dmarx_pool->allocate();
+        descr->dmarx_buf[0] = descr->dmarx_pool->alloc(DMA_BUFFER_WRITE);
+        descr->dmarx_buf[1] = descr->dmarx_pool->alloc(DMA_BUFFER_WRITE);
         rx_buf = (uint16_t *) descr->dmarx_buf[0]->data();
         buf_size = descr->dmarx_buf[0]->size();
         HAL_NVIC_DisableIRQ(descr->dmarx_irqn);
     }
 
     if (i2s_mode & AN_I2S_MODE_OUT) {
-        descr->dmatx_buf[0] = descr->dmatx_pool->dequeue();
-        descr->dmatx_buf[1] = descr->dmatx_pool->dequeue();
+        descr->dmatx_buf[0] = descr->dmatx_pool->alloc(DMA_BUFFER_READ);
+        descr->dmatx_buf[1] = descr->dmatx_pool->alloc(DMA_BUFFER_READ);
         tx_buf = (uint16_t *) descr->dmatx_buf[0]->data();
         buf_size = descr->dmatx_buf[0]->size();
         HAL_NVIC_DisableIRQ(descr->dmatx_irqn);
@@ -183,7 +183,7 @@ static int i2s_start_dma_transfer(i2s_descr_t *descr, i2s_mode_t i2s_mode) {
             return 0;
         }
     }
-
+    HAL_I2S_DMAPause(&descr->i2s);
     // Re/enable DMA double buffer mode.
     if (i2s_mode & AN_I2S_MODE_IN) {
         hal_dma_enable_dbm(&descr->dmarx, descr->dmarx_buf[0]->data(), descr->dmarx_buf[1]->data());
@@ -194,6 +194,7 @@ static int i2s_start_dma_transfer(i2s_descr_t *descr, i2s_mode_t i2s_mode) {
         hal_dma_enable_dbm(&descr->dmatx, descr->dmatx_buf[0]->data(), descr->dmatx_buf[1]->data());
         HAL_NVIC_EnableIRQ(descr->dmatx_irqn);
     }
+    HAL_I2S_DMAResume(&descr->i2s);
     return 1;
 }
 
@@ -216,7 +217,7 @@ DMABuffer<Sample> &AdvancedI2S::read() {
         while (!descr->dmarx_pool->readable()) {
             __WFI();
         }
-        return *descr->dmarx_pool->dequeue();
+        return *descr->dmarx_pool->alloc(DMA_BUFFER_READ);
     }
     return NULLBUF;
 }
@@ -227,7 +228,7 @@ DMABuffer<Sample> &AdvancedI2S::dequeue() {
         while (!descr->dmatx_pool->writable()) {
             __WFI();
         }
-        return *descr->dmatx_pool->allocate();
+        return *descr->dmatx_pool->alloc(DMA_BUFFER_WRITE);
     }
     return NULLBUF;
 }
@@ -241,7 +242,7 @@ void AdvancedI2S::write(DMABuffer<Sample> &dmabuf) {
 
     // Make sure any cached data is flushed.
     dmabuf.flush();
-    descr->dmatx_pool->enqueue(&dmabuf);
+    dmabuf.release();
 
     if (descr->dmatx_buf[0] == nullptr && (++buf_count % 3) == 0) {
         i2s_start_dma_transfer(descr, i2s_mode);
@@ -285,7 +286,7 @@ int AdvancedI2S::begin(i2s_mode_t i2s_mode, uint32_t sample_rate, size_t n_sampl
 
     if (i2s_mode & AN_I2S_MODE_IN) {
         // Allocate DMA buffer pool.
-        descr->dmarx_pool = new DMABufferPool<Sample>(n_samples, 2, n_buffers);
+        descr->dmarx_pool = new DMAPool<Sample>(n_samples, 2, n_buffers);
         if (descr->dmarx_pool == nullptr) {
             descr = nullptr;
             return 0;
@@ -299,7 +300,7 @@ int AdvancedI2S::begin(i2s_mode_t i2s_mode, uint32_t sample_rate, size_t n_sampl
 
     if (i2s_mode & AN_I2S_MODE_OUT) {
         // Allocate DMA buffer pool.
-        descr->dmatx_pool = new DMABufferPool<Sample>(n_samples, 2, n_buffers);
+        descr->dmatx_pool = new DMAPool<Sample>(n_samples, 2, n_buffers);
         if (descr->dmatx_pool == nullptr) {
             descr = nullptr;
             return 0;
@@ -358,7 +359,7 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *i2s) {
     // the next DMA memory address target.
     if (descr->dmatx_pool->readable()) {
         descr->dmatx_buf[ct]->release();
-        descr->dmatx_buf[ct] = descr->dmatx_pool->dequeue();
+        descr->dmatx_buf[ct] = descr->dmatx_pool->alloc(DMA_BUFFER_READ);
         hal_dma_update_memory(&descr->dmatx, descr->dmatx_buf[ct]->data());
     } else {
         i2s_descr_deinit(descr, false);
@@ -384,15 +385,15 @@ void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *i2s) {
         // Make sure any cached data is discarded.
         descr->dmarx_buf[ct]->invalidate();
         // Move current DMA buffer to ready queue.
-        descr->dmarx_pool->enqueue(descr->dmarx_buf[ct]);
+        descr->dmarx_buf[ct]->release();
         // Allocate a new free buffer.
-        descr->dmarx_buf[ct] = descr->dmarx_pool->allocate();
+        descr->dmarx_buf[ct] = descr->dmarx_pool->alloc(DMA_BUFFER_WRITE);
         // Currently, all multi-channel buffers are interleaved.
         if (descr->dmarx_buf[ct]->channels() > 1) {
-            descr->dmarx_buf[ct]->setflags(DMA_BUFFER_INTRLVD);
+            descr->dmarx_buf[ct]->set_flags(DMA_BUFFER_INTRLVD);
         }
     } else {
-        descr->dmarx_buf[ct]->setflags(DMA_BUFFER_DISCONT);
+        descr->dmarx_buf[ct]->set_flags(DMA_BUFFER_DISCONT);
     }
 
     // Update the next DMA target pointer.
