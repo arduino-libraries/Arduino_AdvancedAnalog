@@ -189,12 +189,12 @@ AdvancedDAC dac1(A13);
 
 ### `AdvancedDAC.begin()`
 
-Initializes the DAC with the specified parameters. To reconfigure the DAC, `stop()` must be called first.
+Initializes the DAC with the specified parameters. To reconfigure the DAC, `stop()` must be called first. The DAC has a special mode called _loop mode_ enabled by setting `loop` parameter to `true`. In loop mode, the DAC will start automatically after all buffers are filled, and continuously cycle through over all buffers.
 
 #### Syntax
 
 ```
-dac.begin(resolution, frequency, n_samples, n_buffers)
+dac.begin(resolution, frequency, n_samples, n_buffers, loop=false)
 ```
 
 #### Parameters
@@ -206,6 +206,7 @@ dac.begin(resolution, frequency, n_samples, n_buffers)
 - `int` - **frequency** - the output frequency in Hertz, e.g. `8000`.
 - `int` - **n_samples** - the number of samples per sample buffer. See [SampleBuffer](#samplebuffer) for more details.
 - `int` - **n_buffers** - the number of sample buffers in the queue. See [SampleBuffer](#samplebuffer) for more details.
+- `bool`- **loop** - enables loop mode.
 
 #### Returns
 
