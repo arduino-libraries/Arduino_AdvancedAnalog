@@ -77,10 +77,12 @@ Below is a table illustrating the pin mapping for each ADC in **Arduino Giga R1 
 | A5    | X     | X      | X    |
 | A6    | X     | X      | X    |
 | A7    | X     |        |      |
-| A8    |       |        | X    |
-| A9    |       |        | X    |
-| A10   | X     | X      |      |
-| A11   | X     | X      |      |
+| A8(*)   |       |        | X    |
+| A9(*)   |       |        | X    |
+| A10(*)  | X     | X      |      |
+| A11(*)  | X     | X      |      |
+
+(*) _Currently not supported_
 
 Here is a example for the Arduino GIGA R1 WiFi:
 
