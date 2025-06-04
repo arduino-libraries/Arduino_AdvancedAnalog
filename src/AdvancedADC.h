@@ -21,9 +21,6 @@
 #define __ADVANCED_ADC_H__
 
 #include "AdvancedAnalog.h"
-#if __has_include("pure_analog_pins.h")
-#include "pure_analog_pins.h"
-#endif
 
 struct adc_descr_t;
 
@@ -44,25 +41,14 @@ class AdvancedADC {
         adc_descr_t *descr;
         PinName adc_pins[AN_MAX_ADC_CHANNELS];
 
-        template <typename P>
-        static inline PinName _toPinName(P p) {
-            return analogPinToPinName(p);
-        }
-#if __has_include("pure_analog_pins.h")
-        static inline PinName _toPinName(PureAnalogPin p) {
-            extern AnalogPinDescription g_pureAAnalogPinDescription[];
-            return g_pureAAnalogPinDescription[p.get()].name;
-        }
-#endif
-
     public:
-        template <typename P0, typename ... P>
-        AdvancedADC(P0 p0, P ... pins): n_channels(0), descr(nullptr) {
-            static_assert(sizeof ...(pins) < AN_MAX_ADC_CHANNELS,
+        template <typename ... T>
+        AdvancedADC(pin_size_t p0, T ... args): n_channels(0), descr(nullptr) {
+            static_assert(sizeof ...(args) < AN_MAX_ADC_CHANNELS,
                     "A maximum of 16 channels can be sampled successively.");
 
-            for (PinName pin : { _toPinName(p0), _toPinName(pins)... }) {
-                adc_pins[n_channels++] = pin;
+            for (auto p : {p0, args...}) {
+                adc_pins[n_channels++] = analogPinToPinName(p);
             }
         }
         AdvancedADC(): n_channels(0), descr(nullptr) {
@@ -86,21 +72,6 @@ class AdvancedADC {
             n_channels = n_pins;
             return begin(resolution, sample_rate, n_samples, n_buffers, start, sample_time);
         }
-#if __has_include("pure_analog_pins.h")
-        int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
-                  size_t n_buffers, size_t n_pins, PureAnalogPin *pins, bool start=true,
-                  adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5) {
-            if (n_pins > AN_MAX_ADC_CHANNELS) {
-                n_pins = AN_MAX_ADC_CHANNELS;
-            }
-            for (size_t i = 0; i < n_pins; ++i) {
-                adc_pins[i] = _toPinName(pins[i]);
-            }
-
-            n_channels = n_pins;
-            return begin(resolution, sample_rate, n_samples, n_buffers, start, sample_time);
-        }
-#endif
         int start(uint32_t sample_rate);
         int stop();
         void clear();
