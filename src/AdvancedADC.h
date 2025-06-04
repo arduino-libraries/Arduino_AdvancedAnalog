@@ -49,10 +49,7 @@ class AdvancedADC {
             return analogPinToPinName(p);
         }
 #if __has_include("pure_analog_pins.h")
-        static inline PinName _toPinName(PureAnalogPin p) {
-            extern AnalogPinDescription g_pureAAnalogPinDescription[];
-            return g_pureAAnalogPinDescription[p.get()].name;
-        }
+        static PinName _toPinName(PureAnalogPin p);
 #endif
 
     public:
@@ -89,17 +86,7 @@ class AdvancedADC {
 #if __has_include("pure_analog_pins.h")
         int begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
                   size_t n_buffers, size_t n_pins, PureAnalogPin *pins, bool start=true,
-                  adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5) {
-            if (n_pins > AN_MAX_ADC_CHANNELS) {
-                n_pins = AN_MAX_ADC_CHANNELS;
-            }
-            for (size_t i = 0; i < n_pins; ++i) {
-                adc_pins[i] = _toPinName(pins[i]);
-            }
-
-            n_channels = n_pins;
-            return begin(resolution, sample_rate, n_samples, n_buffers, start, sample_time);
-        }
+                  adc_sample_time_t sample_time=AN_ADC_SAMPLETIME_8_5);
 #endif
         int start(uint32_t sample_rate);
         int stop();

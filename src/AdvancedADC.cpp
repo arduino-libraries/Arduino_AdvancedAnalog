@@ -20,6 +20,17 @@
 #include "Arduino.h"
 #include "HALConfig.h"
 #include "AdvancedADC.h"
+#if __has_include("pure_analog_pins.h")
+#include "pure_analog_pins.h"
+#endif
+
+#if __has_include("pure_analog_pins.h")
+template <>
+PinName AdvancedADC::_toPinName(PureAnalogPin p) {
+    extern AnalogPinDescription g_pureAAnalogPinDescription[];
+    return g_pureAAnalogPinDescription[p.get()].name;
+}
+#endif
 
 #define ADC_NP  ((ADCName) NC)
 #define ADC_PIN_ALT_MASK    (uint32_t) (ALT0 | ALT1 )
@@ -236,6 +247,23 @@ int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_sampl
 
     return 1;
 }
+
+#if __has_include("pure_analog_pins.h")
+int AdvancedADC::begin(uint32_t resolution, uint32_t sample_rate, size_t n_samples,
+                       size_t n_buffers, size_t n_pins, PureAnalogPin *pins,
+                       bool start, adc_sample_time_t sample_time) {
+    if (n_pins > AN_MAX_ADC_CHANNELS) {
+        n_pins = AN_MAX_ADC_CHANNELS;
+    }
+
+    for (size_t i = 0; i < n_pins; ++i) {
+        adc_pins[i] = _toPinName(pins[i]);
+    }
+
+    n_channels = n_pins;
+    return begin(resolution, sample_rate, n_samples, n_buffers, start, sample_time);
+}
+#endif
 
 int AdvancedADC::start(uint32_t sample_rate){
     // Initialize and configure the ADC timer.
